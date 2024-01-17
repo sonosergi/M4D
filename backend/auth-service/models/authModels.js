@@ -1,38 +1,55 @@
 import argon2 from 'argon2';
+import crypto from 'crypto';
+import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
+import { AuthDatabase } from '../databases/authDatabases.js'; // Import AuthDatabase
+
+dotenv.config();
+
+const argon2Options = {
+  type: argon2[process.env.ARGON2_TYPE],
+  timeCost: parseInt(process.env.ARGON2_TIME_COST),
+  memoryCost: parseInt(process.env.ARGON2_MEMORY_COST),
+  parallelism: parseInt(process.env.ARGON2_PARALLELISM),
+};
 
 export class AuthModel {
-  static async getUser(phoneNumber, username) {
-    // Assuming getUser is a method in AuthDatabase
-    return await AuthDatabase.getUser(phoneNumber, username);
+  static async getUser({ phoneNumber = null, username = null } = {}) {
+    if (phoneNumber === null && username === null) {
+      throw new Error('Either phoneNumber or username must be provided');
+    }
+    const user = await AuthDatabase.getUser(username, phoneNumber); // Change the order of arguments
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
   }
 
   static async hashPassword(password) {
-    return await argon2.hash(password);
+    if (!password) {
+      throw new Error('Password must be provided');
+    }
+    const salt = crypto.randomBytes(parseInt(process.env.ARGON2_SALT_LENGTH));
+    return await argon2.hash(password, { salt, ...argon2Options });
   }
 
-  static async createUserTest(phoneNumber, username, password) {
-    // Hash the password
+  static async createUser(phoneNumber, username, password) {
+    if (!phoneNumber || !username || !password) {
+      throw new Error('phoneNumber, username and password must be provided');
+    }
     const hashedPassword = await this.hashPassword(password);
-  
-    // Generate a verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
-  
-    // Generate a unique identifier
     const uniqueId = uuidv4();
-  
-    // Return the necessary data to create a user
-    return { uniqueId, phoneNumber, username, hashedPassword, verificationCode };
+    await AuthDatabase.createUser(uniqueId, phoneNumber, username, hashedPassword, verificationCode);
   }
 
   static async comparePassword(password, hashedPassword) {
-    try {
-      return await argon2.verify(hashedPassword, password);
-    } catch (err) {
-      console.error('Error comparing password');
-      throw new Error('Error comparing password');
+    if (!password || !hashedPassword) {
+      throw new Error('password and hashedPassword must be provided');
     }
+    return await argon2.verify(hashedPassword, password);
   }
+
 
   // static async createUser(phoneNumber, username, password) {
   //   try {
