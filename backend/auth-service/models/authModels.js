@@ -2,7 +2,7 @@ import argon2 from 'argon2';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import { AuthDatabase } from '../databases/authDatabases.js'; // Import AuthDatabase
+import { AuthDatabase } from '../databases/authDatabases.js'; 
 
 dotenv.config();
 
@@ -18,7 +18,7 @@ export class AuthModel {
     if (phoneNumber === null && username === null) {
       throw new Error('Either phoneNumber or username must be provided');
     }
-    const user = await AuthDatabase.getUser(username, phoneNumber); // Change the order of arguments
+    const user = await AuthDatabase.getUser(username, phoneNumber); 
     if (!user) {
       throw new Error('User not found');
     }

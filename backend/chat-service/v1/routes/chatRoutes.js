@@ -1,26 +1,36 @@
-import { chatController } from '../../controllers/chatControllers.js';
-import RateLimiters from '../../middlewares/rateLimiters.js';
-import { validateUser } from '../../middlewares/validateUser.js';
 import { Router } from 'express';
+import { handleConnection } from '../../controllers/chatControllers.js';
+//import jwt from 'jsonwebtoken';
 
-export const chatRouter = Router();
+export const chatRoutes = Router();
 
-chatRouter.post('/chat-room', validateUser, RateLimiters.createChatRoomLimiter, chatController.createChatRoom);
+// Middleware de autenticación
+// chatRoutes.use((req, res, next) => {
+//     const authHeader = req.headers['authorization'];
+//     const token = authHeader && authHeader.split(' ')[1];
 
-chatRouter.delete('/chat-room/:id', validateUser, RateLimiters.deleteChatRoomLimiter, chatController.deleteChatRoom);
+//     if (token == null) return res.sendStatus(401); // Si no hay token, devuelve un error 401
 
-chatRouter.post('/chat-room/:id/join', validateUser, RateLimiters.joinChatRoomLimiter, chatController.joinChatRoom);
+//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+//         if (err) return res.sendStatus(403); // Si el token es inválido, devuelve un error 403
+//         req.user = user;
+//         next(); // Si todo está bien, pasa al siguiente middleware
+//     });
+// });
 
-chatRouter.post('/private-message', validateUser, RateLimiters.privateMessageLimiter, chatController.sendPrivateMessage);
+chatRoutes.get('/', (req, res) => {
+    const connectedUsers = {}
+    let messages = []
 
-chatRouter.get('/chat-room/:id/history', validateUser, RateLimiters.chatHistoryLimiter, chatController.getChatHistory);
+    io.on('connection', (socket) => handleConnection(socket, io, connectedUsers, messages))
+});
 
-chatRouter.post('/chat-room/:id/moderate', validateUser, RateLimiters.moderationLimiter, chatController.moderateChat);
+app.post('/chat_rooms', async (req, res) => {
+  const chatRoom = await chatRoomModel.createChatRoom(req.body.name)
+  res.json(chatRoom)
+})
 
-chatRouter.post('/chat-room/:id/reaction', validateUser, RateLimiters.reactionLimiter, chatController.sendReaction);
-
-chatRouter.post('/chat-room/:id/attachment', validateUser, RateLimiters.attachmentLimiter, chatController.sendAttachment);
-
-chatRouter.post('/chat-room/:id/encrypt', validateUser, RateLimiters.encryptionLimiter, chatController.encryptChat);
-
-
+app.delete('/chat_rooms/:id', async (req, res) => {
+  const chatRoom = await chatRoomModel.deleteChatRoom(req.params.id)
+  res.json(chatRoom)
+})

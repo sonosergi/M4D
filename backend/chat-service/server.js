@@ -1,15 +1,14 @@
 import express from "express";
-import { authRouter } from "./v1/routes/chatRoutes.js";
-import { corsMiddleware } from "./middlewares/cors.js";
-import middleware from "./middlewares/headers.js";
+import { chatRoutes } from "./v1/routes/chatRoutes.js";
+import { validateUser } from './middlewares/validateUser.js';
+
+
 
 const app = express();
+app.use(validateUser);
 app.use(express.json());
-app.use(corsMiddleware);
-app.use(middleware.helmetMiddleware);
-app.use(middleware.winstonMiddleware.bind(middleware));
-app.use('/chat-service', authRouter);
-app.use(middleware.winstonErrorMiddleware.bind(middleware));
+//app.use(corsMiddleware);
+app.use('/chat-service', chatRoutes);
 
 const PORT = process.env.PORT ?? 3200;
 app.listen(PORT, () => {
