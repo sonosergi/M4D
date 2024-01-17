@@ -1,0 +1,20 @@
+{
+  "name": "chat-service",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonosergi/28K-M4d.git"
+  },
+  "author": "sonosergi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sonosergi/28K-M4d/issues"
+  },
+  "homepage": "https://github.com/sonosergi/28K-M4d#readme"
+}

@@ -3,7 +3,14 @@ import winston from 'winston';
 
 class Middleware {
   constructor() {
-    this.helmetMiddleware = helmet();
+    this.helmetMiddleware = helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          // Add +
+        },
+      },
+    });
     this.logger = winston.createLogger({
       level: 'info',
       format: winston.format.json(),
@@ -27,8 +34,13 @@ class Middleware {
   }
 
   winstonErrorMiddleware(err, req, res, next) {
-    this.logger.error(err.stack);
-    res.status(500).send('Something broke!');
+    this.logger.error(`${err.status || 500} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
+    res.status(err.status || 500);
+    if (process.env.NODE_ENV === 'production') {
+      res.send('Something broke!');
+    } else {
+      res.send(err.stack);
+    }
   }
 }
 
