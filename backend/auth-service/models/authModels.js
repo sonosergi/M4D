@@ -18,7 +18,7 @@ export class AuthModel {
     if (phoneNumber === null && username === null) {
       throw new Error('Either phoneNumber or username must be provided');
     }
-    const user = await AuthDatabase.getUser(username, phoneNumber); 
+    const [user] = await AuthDatabase.getUser(username, phoneNumber);
     if (!user) {
       throw new Error('User not found');
     }

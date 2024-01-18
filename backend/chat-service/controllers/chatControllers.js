@@ -1,4 +1,4 @@
-import { getMessages, insertMessage } from '../models/chatModels.js'
+import { ChatModel } from '../models/chatModels.js';
 import WebSocket from 'ws';
 
 export const handleConnection = async (wss, connectedUsers, messages) => {
@@ -23,7 +23,7 @@ export const handleConnection = async (wss, connectedUsers, messages) => {
                 console.log({ username })
 
                 try {
-                    const id = await insertMessage(data.msg, username)
+                    const id = await ChatModel.insertMessage(data.msg, username)
                     const message = { msg: data.msg, id: id.toString(), username }
 
                     messages.push(message)
@@ -54,7 +54,7 @@ export const handleConnection = async (wss, connectedUsers, messages) => {
         });
 
         try {
-            const previousMessages = await getMessages()
+            const previousMessages = await ChatModel.getMessages()
             messages = previousMessages
             ws.send(JSON.stringify({ type: 'previousMessages', messages }));
         } catch (e) {

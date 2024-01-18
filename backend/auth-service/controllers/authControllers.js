@@ -33,6 +33,8 @@ export class AuthController {
 
   static async register(req, res) {
     try {
+      await AuthDatabase.init();
+
       const { phoneNumber, username, password } = req.body;
       const userExists = await AuthDatabase.userExists(username, phoneNumber);
       if (userExists) {

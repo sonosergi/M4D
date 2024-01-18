@@ -6,5 +6,7 @@ dotenv.config();
 const chatdb = pgp()(process.env.DATABASE_URL);
 
 export class ChatDatabase {
-  
+    static async query(query, parameters) {
+        return await chatdb.query(query, parameters);
+    }
 }
