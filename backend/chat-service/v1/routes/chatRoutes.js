@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { handleConnection } from '../../controllers/chatControllers.js';
+
+import ChatControllers from '../../controllers/chatControllers.js';
 //import jwt from 'jsonwebtoken';
 
 export const chatRoutes = Router();
@@ -18,19 +19,11 @@ export const chatRoutes = Router();
 //     });
 // });
 
-chatRoutes.get('/', (req, res) => {
-    const connectedUsers = {}
-    let messages = []
+// Crear una sala de chat
+chatRoutes.post('/chat_rooms', ChatControllers.createChatRoom);
 
-    io.on('connection', (socket) => handleConnection(socket, io, connectedUsers, messages))
-});
+// Gestionar salas de chat (eliminar)
+chatRoutes.delete('/chat_rooms/:id', ChatControllers.deleteChatRoom);
 
-app.post('/chat_rooms', async (req, res) => {
-  const chatRoom = await chatRoomModel.createChatRoom(req.body.name)
-  res.json(chatRoom)
-})
-
-app.delete('/chat_rooms/:id', async (req, res) => {
-  const chatRoom = await chatRoomModel.deleteChatRoom(req.params.id)
-  res.json(chatRoom)
-})
+// Listar salas de chat
+chatRoutes.get('/chat_rooms', ChatControllers.listChatRooms);
