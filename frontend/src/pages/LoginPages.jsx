@@ -37,15 +37,15 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <div>
+    <div className="login-container">
       <h1>{isLogin ? 'Iniciar sesión' : 'Registrarse'}</h1>
-      <form onSubmit={handleSubmit}>
-        <input type="text" name="username" placeholder="Username" onChange={handleChange} />
-        <input type="password" name="password" placeholder="Password" onChange={handleChange} />
+      <form className="login-form" onSubmit={handleSubmit}>
+        <input type="text" name="username" placeholder="Usuario o Teléfono" onChange={handleChange} />
+        <input type="password" name="password" placeholder="Contraseña" onChange={handleChange} />
         {!isLogin && <input type="text" name="phoneNumber" placeholder="Phone Number" onChange={handleChange} />}
         <button type="submit">{isLogin ? 'Iniciar sesión' : 'Registrarse'}</button>
       </form>
-      {error && <p>{error}</p>}
+      {error && <p className="error-message">{error}</p>}
       <button onClick={() => setIsLogin(!isLogin)}>
         {isLogin ? '¿No tienes una cuenta? Regístrate' : '¿Ya tienes una cuenta? Inicia sesión'}
       </button>

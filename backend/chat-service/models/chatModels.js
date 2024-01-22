@@ -1,14 +1,19 @@
 import { ChatDatabase } from '../databases/chatDatabases.js';
+import { z } from 'zod';
+
+const roomInputSchema = z.object({
+  user_id: z.string().uuid(),
+  roomName: z.string().min(1),
+  locationId: z.string().min(1),
+});
 
 export class ChatModel {
-  static async createChatRoom(roomName, locationId) {
-    if (!roomName || !locationId) {
-      throw new Error('Invalid input');
-    }
+  static async createChatRoom(user_id, roomName, locationId) {
+    const roomInput = roomInputSchema.parse({ user_id, roomName, locationId });
 
     const existingRoom = await ChatDatabase.query(
-      'SELECT * FROM chat_rooms WHERE name = $1',
-      [roomName]
+      'SELECT * FROM chat_rooms WHERE room_name = $1',
+      [roomInput.roomName]
     );
 
     if (existingRoom.length > 0) {
@@ -16,8 +21,8 @@ export class ChatModel {
     }
 
     const newRoom = await ChatDatabase.query(
-      'INSERT INTO chat_rooms (room_name, location_id) VALUES ($1, $2) RETURNING *',
-      [roomName, locationId]
+      'INSERT INTO chat_rooms (user_id, room_name, location_id) VALUES ($1, $2, $3) RETURNING *',
+      [roomInput.user_id, roomInput.roomName, roomInput.locationId]
     );
 
     return newRoom[0];

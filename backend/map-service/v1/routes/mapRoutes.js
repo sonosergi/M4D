@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { mapController } from '../controllers/mapControllers.js';
+import { mapController } from '../../controllers/mapControllers.js';
 
 const mapRouter = Router();
 

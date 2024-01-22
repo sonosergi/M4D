@@ -2,7 +2,9 @@ import { ChatModel } from '../models/chatModels.js';
 import { z } from 'zod';
 
 const roomSchema = z.object({
+  user_id: z.string().uuid(),
   roomName: z.string().min(1),
+  locationId: z.string().min(1), // changed from location_id to locationId
 });
 
 export class ChatController {
@@ -27,11 +29,12 @@ export class ChatController {
 
   createChatRoom = async (req, res, next) => {
     try {
+      console.log(req.body); // Add this line to log the request body
       const roomInput = roomSchema.parse(req.body);
-      const newChatRoom = await ChatModel.createChatRoom(roomInput.roomName, roomInput.locationId);
+      const newChatRoom = await ChatModel.createChatRoom(roomInput.user_id, roomInput.roomName, roomInput.locationId);
       res.status(201).json({ message: 'Chat room created', newChatRoom });
     } catch (error) {
-      console.error(error); // Add this line
+      console.error(error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: error.message });
       } else if (error.message === 'Chat room already exists') {

@@ -3,17 +3,17 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const mapdb = pgp()(process.env.MAP_DB_URL);
+const dbmap = pgp()(process.env.MAP_DB_URL);
 
 const createTables = async () => {
     try {
-        await mapdb.tx(async t => {
+        await dbmap.tx(async t => {
             await t.none(`
                 CREATE TABLE IF NOT EXISTS location (
                     id SERIAL PRIMARY KEY,
                     user_id UUID REFERENCES users(user_id),
-                    lat INT NOT NULL,
-                    lng INT NOT NULL,
+                    lat REAL NOT NULL,
+                    lng REAL NOT NULL,
                     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             `);
@@ -29,9 +29,7 @@ createTables();
 export class MapDatabase {
     static async query(query, parameters) {
         try {
-            const result = await mapdb.tx(async t => {
-                return await t.any(query, parameters);
-            });
+            const result = await dbmap.any(query, parameters);
             return result;
         } catch (error) {
             console.error('Error executing query: ', error);
@@ -42,8 +40,6 @@ export class MapDatabase {
                 errorMessage = 'Error reading the SQL file';
             }
             throw new Error(errorMessage);
-        } finally {
-            mapdb.$pool.end();
         }
     }
 }

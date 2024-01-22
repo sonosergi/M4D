@@ -42,6 +42,7 @@ app.use('/', chatRoutes(io));
 // Apply helmet middleware to Socket.IO
 io.engine.use(helmet());
 
+
 // Apply passport-jwt middleware to Socket.IO
 // io.engine.use((req, res, next) => {
 //   const isHandshake = req._query.sid === undefined;

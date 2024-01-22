@@ -1,7 +1,22 @@
-import dbmap from './database/mapDatabase.js';
+import { MapDatabase } from '../databases/mapDatabase.js';
 
-export const Marker = {
-  create: (lat, lng, chatRoomId) => dbmap.one('INSERT INTO location(lat, lng, chat_room_id) VALUES($1, $2, $3) RETURNING *', [lat, lng, chatRoomId]),
-  findAll: () => dbmap.any('SELECT * FROM location'),
-  delete: (id) => dbmap.none('DELETE FROM location WHERE id = $1', [id]),
-};
+export class MapModel {
+    static async createMarker(user_id, lat, lng) {
+        const query = `
+            INSERT INTO location (user_id, lat, lng)
+            VALUES ($1, $2, $3)
+            RETURNING id;
+        `;
+        return await MapDatabase.query(query, [user_id, lat, lng]);
+    }
+
+    static async listMarkers() {
+        const query = 'SELECT * FROM location;';
+        return await MapDatabase.query(query);
+    }
+
+    static async deleteMarker(id) {
+        const query = 'DELETE FROM location WHERE id = $1;';
+        return await MapDatabase.query(query, [id]);
+    }
+}
