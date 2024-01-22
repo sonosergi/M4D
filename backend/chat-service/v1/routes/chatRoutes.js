@@ -1,29 +1,26 @@
+// routes/chatRoutes.js
 import { Router } from 'express';
+import { ChatController } from '../../controllers/chatControllers.js';
 
-import ChatControllers from '../../controllers/chatControllers.js';
-//import jwt from 'jsonwebtoken';
+export const chatRoutes = (io) => {
+  const chatRoutes = Router();
+  const chatController = new ChatController(io);
 
-export const chatRoutes = Router();
+  chatRoutes.post('/chat_rooms', (req, res, next) => chatController.createChatRoom(req, res, next));
+  chatRoutes.delete('/chat_rooms/:id', (req, res, next) => chatController.deleteChatRoom(req, res, next));
+  chatRoutes.get('/chat_rooms', (req, res, next) => chatController.listChatRooms(req, res, next));
 
-// Middleware de autenticación
-// chatRoutes.use((req, res, next) => {
-//     const authHeader = req.headers['authorization'];
-//     const token = authHeader && authHeader.split(' ')[1];
+  chatRoutes.post('/chat_rooms/:id/messages', (req, res, next) => chatController.handleMessage(req, res, next));
+  chatRoutes.get('/chat_rooms/:id/messages', (req, res, next) => chatController.fetchMessages(req, res, next));
 
-//     if (token == null) return res.sendStatus(401); // Si no hay token, devuelve un error 401
+  chatRoutes.post('/private_chats', (req, res, next) => chatController.handlePrivateConnection(req, res, next));
+  chatRoutes.get('/private_chats/:id', (req, res, next) => chatController.fetchPrivateChat(req, res, next));
 
-//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-//         if (err) return res.sendStatus(403); // Si el token es inválido, devuelve un error 403
-//         req.user = user;
-//         next(); // Si todo está bien, pasa al siguiente middleware
-//     });
-// });
+  chatRoutes.post('/private_chats/:id/messages', (req, res, next) => chatController.handlePrivateMessage(req, res, next));
+  chatRoutes.get('/private_chats/:id/messages', (req, res, next) => chatController.fetchPrivateMessages(req, res, next));
 
-// Crear una sala de chat
-chatRoutes.post('/chat_rooms', ChatControllers.createChatRoom);
+  chatRoutes.post('/disconnect_sockets', (req, res, next) => chatController.disconnectSockets(req, res, next));
+  chatRoutes.get('/fetch_sockets', (req, res, next) => chatController.fetchSockets(req, res, next));
 
-// Gestionar salas de chat (eliminar)
-chatRoutes.delete('/chat_rooms/:id', ChatControllers.deleteChatRoom);
-
-// Listar salas de chat
-chatRoutes.get('/chat_rooms', ChatControllers.listChatRooms);
+  return chatRoutes;
+};

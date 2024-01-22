@@ -1,72 +1,138 @@
 import { ChatModel } from '../models/chatModels.js';
+import { z } from 'zod';
 
-class ChatController {
-    constructor(chatModel) {
-        this.chatModel = chatModel;
-    }
+const roomSchema = z.object({
+  roomName: z.string().min(1),
+});
 
-    handleConnection = async (req, res, next) => {
-        try {
-            const room = req.params.room;
-            const chatRoom = await this.chatModel.getChatRoom(room);
-            if (!chatRoom) {
-                return res.status(404).json({ message: 'Chat room does not exist' });
-            }
-            if (req.user && req.user.id) {
-                req.io.to(room).emit('userConnected', req.user.id);
-            }
-            res.json(chatRoom);
-        } catch (error) {
-            next(error);
-        }
-    }
+export class ChatController {
+  constructor(io) {
+    this.io = io;
+  }
 
-    createChatRoom = async (req, res) => {
-        try {
-            const roomName = req.body.roomName; 
-            const newChatRoom = await this.chatModel.createChatRoom(roomName);
-            res.status(201).json({ message: 'Chat room created', newChatRoom });
-        } catch (error) {
-            res.status(500).json({ message: error.message });
-        }
+  handleConnection = (socket) => async (roomId) => {
+    try {
+      const chatRoom = await ChatModel.getChatRoom(roomId);
+      if (chatRoom) {
+        socket.join(roomId);
+        console.log(`Client joined room ${roomId}`);
+      } else {
+        socket.emit('error', 'Chat room does not exist');
+        console.log(`Client tried to join non-existent room ${roomId}`);
+      }
+    } catch (error) {
+      socket.emit('error', 'An error occurred while joining the room');
     }
+  }
 
-    handlePrivateConnection = async (req, res) => {
-        try {
-            const user1 = req.params.user1;
-            const user2 = req.params.user2;
-            const room = `${user1}-${user2}`;
-            if (req.user && req.user.id) {
-                req.io.to(room).emit('privateChatStarted', { user1, user2 });
-            }
-            const privateChat = await this.chatModel.createPrivateChat(user1, user2);
-            res.json(privateChat);
-        } catch (error) {
-            res.status(500).json({ message: error.message });
-        }
+  createChatRoom = async (req, res, next) => {
+    try {
+      const roomInput = roomSchema.parse(req.body);
+      const newChatRoom = await ChatModel.createChatRoom(roomInput.roomName, roomInput.locationId);
+      res.status(201).json({ message: 'Chat room created', newChatRoom });
+    } catch (error) {
+      console.error(error); // Add this line
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: error.message });
+      } else if (error.message === 'Chat room already exists') {
+        res.status(400).json({ message: 'Chat room already exists' });
+      } else {
+        next(new Error('An error occurred while creating the chat room'));
+      }
     }
+  }
 
-    deleteChatRoom = async (req, res) => {
-        try {
-            const roomId = req.params.id;
-            await this.chatModel.deleteChatRoom(roomId);
-            res.status(200).json({ message: 'Chat room deleted' });
-        } catch (error) {
-            res.status(500).json({ message: error.message });
-        }
+  handlePrivateConnection = (socket) => async (user1, user2) => {
+    try {
+      const privateChat = await ChatModel.createPrivateChat(user1, user2);
+      if (privateChat) {
+        socket.join(privateChat.id);
+      } else {
+        socket.emit('error', 'Private chat does not exist');
+      }
+    } catch (error) {
+      socket.emit('error', 'An error occurred while joining the private chat');
     }
+  }
 
-    listChatRooms = async (req, res) => {
-        try {
-            console.log('Listing chat rooms...');
-            const chatRooms = await this.chatModel.listChatRooms();
-            console.log('Chat rooms:', chatRooms);
-            res.json(chatRooms);
-        } catch (error) {
-            console.error('Error listing chat rooms:', error);
-            res.status(500).json({ message: error.message });
-        }
+  handleMessage = (socket) => async (roomId, message, userId) => {
+    try {
+      await ChatModel.saveMessageInChatRoom(roomId, userId, message);
+      this.io.to(roomId).emit("message", message);
+    } catch (error) {
+      socket.emit('error', 'An error occurred while sending the message');
     }
+  }
+
+  handlePrivateMessage = (socket) => async (chatId, message, userId) => {
+    try {
+      await ChatModel.saveMessageInPrivateChat(chatId, userId, message);
+      socket.to(chatId).emit("message", message);
+    } catch (error) {
+      socket.emit('error', 'An error occurred while sending the private message');
+    }
+  }
+
+  fetchMessages = async (req, res, next) => {
+    try {
+      const { roomName, page, pageSize } = req.query;
+      const messages = await ChatModel.getMessagesFromChatRoom(roomName, page, pageSize);
+      res.json(messages);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  fetchPrivateMessages = async (req, res, next) => {
+    try {
+      const { chatId, page, pageSize } = req.query;
+      const messages = await ChatModel.getMessagesFromPrivateChat(chatId, page, pageSize);
+      res.json(messages);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  handleLeaveRoom = (socket) => (roomId) => {
+    socket.leave(roomId);
+  }
+
+  deleteChatRoom = async (req, res, next) => {
+    try {
+      const roomId = req.params.id;
+      await ChatModel.deleteChatRoom(roomId);
+      this.io.socketsLeave(roomId);
+      res.status(200).json({ message: 'Chat room deleted' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  listChatRooms = async (req, res, next) => {
+    try {
+      const chatRooms = await ChatModel.listChatRooms();
+      res.json(chatRooms);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  disconnectSockets = async (req, res, next) => {
+    try {
+      this.io.disconnectSockets();
+      res.status(200).json({ message: 'All sockets disconnected' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  fetchSockets = async (req, res, next) => {
+    try {
+      const sockets = await this.io.fetchSockets();
+      res.json(sockets);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
-export default new ChatController(ChatModel);

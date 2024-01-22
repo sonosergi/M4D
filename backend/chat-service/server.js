@@ -1,59 +1,65 @@
 import express from 'express';
-import { Server } from 'http';
-import { Server as IoServer } from 'socket.io';
-import { chatRoutes } from './v1/routes/chatRoutes.js';
+import { createServer } from "http";
+import { Server } from "socket.io";
+import helmet from 'helmet';
+// import passport from 'passport';
 import dotenv from 'dotenv';
+import path from 'path';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { ChatController } from './controllers/chatControllers.js';
+import { chatRoutes } from './v1/routes/chatRoutes.js';
+// import headersMiddleware from './middlewares/headers.js';
+// import errorHandler from './middlewares/errorHandler.js';
+// import rateLimiter from './middlewares/rateLimit.js';
+// import { validateUser } from './middlewares/validateUser.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config();
 
 const app = express();
-app.use(express.static('./public'));
 app.use(express.json()); 
+// headersMiddleware(app);
+// app.use(rateLimiter);
+// app.use(validateUser);
+// app.use(errorHandler);
 
-const httpServer = new Server(app);
-const io = new IoServer(httpServer, {
-  cors: {
-    origin: "*", 
-    methods: ["GET", "POST"]
-  }
+app.use(express.static(path.join(__dirname, './public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/chat.html'))
+})
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  connectionStateRecorvery: {}
 });
 
-app.use((req, res, next) => {
-  req.io = io; 
-  next();
+const chatController = new ChatController(io);
+app.use('/', chatRoutes(io));
+// Apply helmet middleware to Socket.IO
+io.engine.use(helmet());
+
+// Apply passport-jwt middleware to Socket.IO
+// io.engine.use((req, res, next) => {
+//   const isHandshake = req._query.sid === undefined;
+//   if (isHandshake) {
+//     passport.authenticate("jwt", { session: false })(req, res, next);
+//   } else {
+//     next();
+//   }
+// });
+
+io.on("connection", (socket) => {
+  socket.on("joinRoom", chatController.handleConnection(socket));
+  socket.on("privateConnect", chatController.handlePrivateConnection(socket));
+  socket.on("message", chatController.handleMessage(socket));
+  socket.on("leaveRoom", chatController.handleLeaveRoom(socket));
 });
 
-app.use('/', chatRoutes);
-
-io.on("connection", async (socket) => {
-  socket.on("joinRoom", async (roomId) => {
-    const chatRoom = await ChatControllers.getChatRoom(roomId);
-    if (chatRoom) {
-      socket.join(roomId);
-    } else {
-      socket.emit('error', 'Chat room does not exist');
-    }
-  });
-
-  socket.on("privateConnect", async (user1, user2) => {
-    const privateChat = await ChatControllers.getPrivateChat(user1, user2);
-    if (privateChat) {
-      socket.join(privateChat.id);
-    } else {
-      socket.emit('error', 'Private chat does not exist');
-    }
-  });
-
-  socket.on("message", (roomId, message) => {
-    io.to(roomId).emit("message", message);
-  });
-
-  socket.on("leaveRoom", (roomId) => {
-    socket.leave(roomId);
-  });
-});
-
-const PORT = process.env.PORT ?? 3200;
+const PORT = process.env.PORT ?? 7000;
 httpServer.listen(PORT, () => {
     console.log(`Listening on port http://localhost:${PORT}`);
 });

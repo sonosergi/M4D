@@ -38,6 +38,7 @@ export class AuthModel {
       throw new Error('phoneNumber, username and password must be provided');
     }
     const hashedPassword = await this.hashPassword(password);
+    // Generate a verification code without sending a text message
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
     const uniqueId = uuidv4();
     await AuthDatabase.createUser(uniqueId, phoneNumber, username, hashedPassword, verificationCode);

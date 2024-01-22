@@ -2,12 +2,22 @@ import express from "express";
 import { authRouter } from "./v1/routes/authRoutes.js";
 //import { corsMiddleware } from "./middlewares/cors.js";
 import Middleware from "./middlewares/headers.js";
+import RateLimiters from './middlewares/rateLimiters.js';
+
 
 const { helmetMiddleware, winstonMiddleware, winstonErrorMiddleware } = Middleware;
 const app = express();
 app.use(express.json());
 
+import cors from 'cors';
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  methods: ['GET', 'POST'], 
+}));
+
 //app.use(corsMiddleware);
+app.use(RateLimiters.limiter);
+app.use(RateLimiters.speedLimiter);
 app.use(helmetMiddleware);
 app.use(winstonMiddleware.bind(Middleware));
 app.use(winstonErrorMiddleware.bind(Middleware));
