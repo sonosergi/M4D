@@ -1,12 +1,13 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import cookie from 'cookie';
 
 dotenv.config();
 
 export function validateUser(req, res, next) {
   try {
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.split(' ')[1];
+    const cookies = cookie.parse(req.headers.cookie || '');
+    const token = cookies.token;
 
     if (!token) {
       return res.status(403).json({ message: 'Not authenticated' });
