@@ -1,27 +1,14 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React from 'react';
 import MapPage from './MapPage';
 
-function MainPage() {
-  const userId = 'your-user-id'; // replace with your user id
-  const [locations, setLocations] = useState([]);
-
-  const fetchLocations = () => {
-    return axios.get('http://localhost:3000/markers')
-      .then(response => {
-        return response.data;
-      }).catch(error => {
-        console.error('Error getting markers: ', error);
-      });
-  };
-
+function MainPage({ onLogout }) {
   return (
     <div className="main-container">
       <h1>Plataforma principal</h1>
+      <button onClick={onLogout}>Cerrar sesión</button>
       <div className="map-container">
-        <MapPage userId={userId} fetchLocations={fetchLocations} />
+        <MapPage />
       </div>
-      <button onClick={fetchLocations}>Search</button>
     </div>
   );
 }

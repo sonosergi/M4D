@@ -51,7 +51,6 @@ export class AuthModel {
     return await argon2.verify(hashedPassword, password);
   }
 
-
   // static async createUser(phoneNumber, username, password) {
   //   try {
   //     // Validate phoneNumber, username and password

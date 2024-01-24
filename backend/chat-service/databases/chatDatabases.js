@@ -11,9 +11,9 @@ const createTables = async () => {
             await t.none(`
                 CREATE TABLE IF NOT EXISTS chat_rooms (
                     id SERIAL PRIMARY KEY,
-                    user_id UUID REFERENCES users(user_id),
+                    user_id UUID NOT NULL REFERENCES users(user_id),
                     room_name VARCHAR(100) NOT NULL UNIQUE,
-                    location_id INT NOT NULL UNIQUE
+                    location_id INT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS room_messages (
                     id SERIAL PRIMARY KEY,

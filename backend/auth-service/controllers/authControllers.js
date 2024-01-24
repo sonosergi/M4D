@@ -19,7 +19,7 @@ export class AuthController {
       }
 
       // Generate JWT
-      const token = jwt.sign({ id: user.id }, process.env.SECRET_KEY, { expiresIn: '1h' });
+      const token = jwt.sign({ id: user.user_id }, process.env.SECRET_KEY, { expiresIn: '1h' });
 
       // Set JWT and CSRF token as HttpOnly cookies
       res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });

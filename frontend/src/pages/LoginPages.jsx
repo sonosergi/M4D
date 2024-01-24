@@ -8,6 +8,8 @@ function LoginPage({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
 
+  axios.defaults.withCredentials = true;
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -26,13 +28,19 @@ function LoginPage({ onLogin }) {
     try {
       const response = await axios.post(url, form);
       console.log(response.data);
-      // Si el inicio de sesión es exitoso, llama a la función onLogin y navega a /main
+      // Si el inicio de sesión es exitoso, guarda el token JWT en el almacenamiento local
       if (response.status === 200) {
+        localStorage.setItem('jwt', response.data.token);
         onLogin();
         navigate('/main');
       }
-    } catch (error) {
-      setError('Error: ' + error.response.data);
+    } 
+    catch (error) {
+      if (error.response) {
+        setError('Error: ' + error.response.data);
+      } else {
+        setError('Error: ' + error.message);
+      }
     }
   };
 

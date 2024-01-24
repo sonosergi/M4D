@@ -3,9 +3,9 @@ import mapRouter from './v1/routes/mapRoutes.js';
 import { validateUser } from './middlewares/validateUser.js';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5500;
 
-app.use(express.json());
+
 
 import cors from 'cors';
 app.use(cors({
@@ -13,8 +13,8 @@ app.use(cors({
   methods: ['GET', 'POST'],
   credentials: true 
 }));
-
 app.use(validateUser);
+app.use(express.json());
 
 
 app.use('/', mapRouter);

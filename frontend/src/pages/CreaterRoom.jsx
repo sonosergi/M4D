@@ -1,31 +1,32 @@
 import React from 'react';
 import axios from 'axios';
 
-function CreateRoom({ userId, locations }) {
-  const createChatRoom = (locationId) => {
-    const roomName = window.prompt('Enter room name');
-    if (roomName) {
-      axios.post('http://localhost:7000/chat_rooms', {
-        user_id: userId,
-        roomName: roomName,
-        locationId: locationId,
-      }).then(() => {
-        alert('Chat room created');
-      }).catch(error => {
-        console.error('Error creating chat room: ', error);
-      });
+const CreateRoom = ({ locationId, closeModal, roomName, setRoomName }) => { // Recibimos roomName y setRoomName como props
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const token = localStorage.getItem('token');
+
+    try {
+      const response = await axios.post('http://localhost:7000/chat_rooms', 
+        { roomName, locationId },
+        { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } }
+      );
+
+      console.log(response.data);
+      closeModal();
+    } catch (error) {
+      console.error(error);
     }
   };
 
   return (
-    <div>
-      {locations.map(location => (
-        <div key={location.id} onClick={() => createChatRoom(location.id)}>
-          <p>Lat: {location.lat}, Lng: {location.lng}</p>
-        </div>
-      ))}
-    </div>
+    <form onSubmit={handleSubmit}>
+      <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} required />
+      <button type="submit">Create Room</button>
+    </form>
   );
-}
+};
 
 export default CreateRoom;

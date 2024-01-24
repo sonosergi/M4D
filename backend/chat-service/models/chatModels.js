@@ -4,7 +4,7 @@ import { z } from 'zod';
 const roomInputSchema = z.object({
   user_id: z.string().uuid(),
   roomName: z.string().min(1),
-  locationId: z.string().min(1),
+  locationId: z.number().int(),
 });
 
 export class ChatModel {
@@ -26,6 +26,14 @@ export class ChatModel {
     );
 
     return newRoom[0];
+  }
+
+  static async listChatRooms() {
+    const rooms = await ChatDatabase.query(
+      'SELECT * FROM chat_rooms'
+    );
+
+    return rooms;
   }
 
   static async getChatRoom(roomName) {
@@ -50,19 +58,6 @@ export class ChatModel {
       'DELETE FROM chat_rooms WHERE name = $1',
       [roomName]
     );
-  }
-
-  static async listChatRooms(page = 1, pageSize = 10) {
-    if (!Number.isInteger(page) || !Number.isInteger(pageSize)) {
-      throw new Error('Invalid input');
-    }
-
-    const offset = (page - 1) * pageSize;
-    const rooms = await ChatDatabase.query(
-      'SELECT * FROM chat_rooms ORDER BY name LIMIT $1 OFFSET $2',
-      [pageSize, offset]
-    );
-    return rooms.map(room => room.name);
   }
 
   static async createPrivateChat(user1, user2) {

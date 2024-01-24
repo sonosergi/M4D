@@ -1,10 +1,9 @@
 import { ChatModel } from '../models/chatModels.js';
 import { z } from 'zod';
 
-const roomSchema = z.object({
-  user_id: z.string().uuid(),
+const roomInputSchema = z.object({
   roomName: z.string().min(1),
-  locationId: z.string().min(1), // changed from location_id to locationId
+  locationId: z.number().int(), // changed from location_id to locationId
 });
 
 export class ChatController {
@@ -30,8 +29,24 @@ export class ChatController {
   createChatRoom = async (req, res, next) => {
     try {
       console.log(req.body); // Add this line to log the request body
-      const roomInput = roomSchema.parse(req.body);
-      const newChatRoom = await ChatModel.createChatRoom(roomInput.user_id, roomInput.roomName, roomInput.locationId);
+  
+      // Check if the user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+  
+      // Extract the user_id from req.user
+      const userId = req.user.id;
+  
+      // Parse the request body
+      const roomInput = roomInputSchema.parse({ user_id: userId, ...req.body });
+  
+      // Log the values that will be passed to createChatRoom
+      console.log(`roomName: ${roomInput.roomName}, locationId: ${roomInput.locationId}, userId: ${userId}`);
+  
+      // Include the user_id in the call to createChatRoom
+      const newChatRoom = await ChatModel.createChatRoom(userId, roomInput.roomName, roomInput.locationId);
+  
       res.status(201).json({ message: 'Chat room created', newChatRoom });
     } catch (error) {
       console.error(error);
@@ -42,6 +57,16 @@ export class ChatController {
       } else {
         next(new Error('An error occurred while creating the chat room'));
       }
+    }
+  }
+
+  listChatRooms = async (req, res, next) => {
+    try {
+      const chatRooms = await ChatModel.listChatRooms();
+      res.json(chatRooms);
+      console.log(chatRooms);
+    } catch (error) {
+      next(error);
     }
   }
 
@@ -106,15 +131,6 @@ export class ChatController {
       await ChatModel.deleteChatRoom(roomId);
       this.io.socketsLeave(roomId);
       res.status(200).json({ message: 'Chat room deleted' });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  listChatRooms = async (req, res, next) => {
-    try {
-      const chatRooms = await ChatModel.listChatRooms();
-      res.json(chatRooms);
     } catch (error) {
       next(error);
     }
