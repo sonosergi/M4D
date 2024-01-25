@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/sonosergi/28K-M4d#readme",
   "dependencies": {
+    "cookie": "0.6.0",
     "dotenv": "16.3.1",
     "express": "4.18.2",
     "express-rate-limit": "7.1.5",

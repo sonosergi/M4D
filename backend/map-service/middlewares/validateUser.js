@@ -8,6 +8,7 @@ export function validateUser(req, res, next) {
   try {
     const cookies = cookie.parse(req.headers.cookie || '');
     const token = cookies.token;
+    console.log(token);
 
     if (!token) {
       return res.status(403).json({ message: 'Not authenticated' });

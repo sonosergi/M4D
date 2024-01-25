@@ -4,27 +4,28 @@ import { z } from 'zod';
 const roomInputSchema = z.object({
   user_id: z.string().uuid(),
   roomName: z.string().min(1),
-  locationId: z.number().int(),
+  lat: z.number(), 
+  lng: z.number(), 
 });
 
 export class ChatModel {
-  static async createChatRoom(user_id, roomName, locationId) {
-    const roomInput = roomInputSchema.parse({ user_id, roomName, locationId });
-
+  static async createChatRoom(user_id, roomName, lat, lng) {
+    const roomInput = roomInputSchema.parse({ user_id, roomName, lat, lng });
+  
     const existingRoom = await ChatDatabase.query(
       'SELECT * FROM chat_rooms WHERE room_name = $1',
       [roomInput.roomName]
     );
-
+  
     if (existingRoom.length > 0) {
       throw new Error('Chat room already exists');
     }
-
+  
     const newRoom = await ChatDatabase.query(
-      'INSERT INTO chat_rooms (user_id, room_name, location_id) VALUES ($1, $2, $3) RETURNING *',
-      [roomInput.user_id, roomInput.roomName, roomInput.locationId]
+      'INSERT INTO chat_rooms (user_id, room_name, lat, lng) VALUES ($1, $2, $3, $4) RETURNING *',
+      [roomInput.user_id, roomInput.roomName, roomInput.lat, roomInput.lng]
     );
-
+  
     return newRoom[0];
   }
 

@@ -2,21 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import CreateRoom from './CreaterRoom';
 import axios from 'axios';
+import ChatRoom from './ChatRoom';
+
 
 axios.defaults.withCredentials = true;
-
-axios.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token;
-    }
-    return config;
-  },
-  error => {
-    return Promise.reject(error);
-  }
-);
 
 const API_MARKERS = 'http://localhost:5500/markers';
 const API_CHAT_ROOMS = 'http://localhost:7000/chat_rooms';
@@ -30,8 +19,10 @@ const MapPage = () => {
   const [showLocations, setShowLocations] = useState(false);
   const [showRooms, setShowRooms] = useState(false);
   const [markers, setMarkers] = useState([]);
+  const [selectedRoom, setSelectedRoom] = useState(null);
 
   const mapRef = useRef(null);
+  
 
   const fetchLocations = useCallback(async () => {
     try {
@@ -60,11 +51,7 @@ const MapPage = () => {
   const fetchRooms = useCallback(async () => {
     try {
       const response = await axios.get(API_CHAT_ROOMS);
-      const roomsWithLocations = await Promise.all(response.data.map(async room => {
-        const locationResponse = await axios.get(`${API_MARKERS}/${room.location_id}`);
-        return { ...room, location: locationResponse.data };
-      }));
-      setRooms(roomsWithLocations);
+      setRooms(response.data);
     } catch (error) {
       console.error(error);
     }
@@ -101,6 +88,7 @@ const MapPage = () => {
         const marker = new google.maps.Marker({
           position: { lat: location.lat, lng: location.lng },
           map,
+          //icon: 'http://ruta/a/tu/otro/icono/personalizado.png',
         });
   
         marker.addListener("click", () => {
@@ -113,15 +101,17 @@ const MapPage = () => {
   
       const roomMarkers = rooms.map(room => {
         const marker = new google.maps.Marker({
-          position: { lat: room.location.lat, lng: room.location.lng },
+          position: { lat: room.lat, lng: room.lng },
           map,
+          //icon: 'http://ruta/a/tu/otro/icono/personalizado.png',
         });
-  
+      
         marker.addListener("click", () => {
-          setSelectedLocation(room.location);
+          setSelectedLocation({ lat: room.lat, lng: room.lng });
+          setSelectedRoom(room);
           setShowModal(true);
         });
-  
+      
         return marker;
       });
   
@@ -131,15 +121,16 @@ const MapPage = () => {
 
   return (
     <>
-      <div>
-        <button onClick={toggleLocations}>Search</button>
-        <button onClick={toggleRooms}>All Rooms</button>
-        <div ref={mapRef} style={{ width: '100%', height: '670px', alignContent: 'center' }}></div>
-      </div>
-      {showModal && <CreateRoom locationId={selectedLocation.id} closeModal={() => setShowModal(false)} roomName={roomName} setRoomName={setRoomName} />}
-      {showLocations && locations.map(location => <div key={location.id}>{location.name}</div>)}
-      {showRooms && rooms.map(room => <div key={room.id}>{room.name}</div>)}
-    </>
+    <div>
+      <button onClick={toggleLocations}>Search</button>
+      <button onClick={toggleRooms}>All Rooms</button>
+      <div ref={mapRef} style={{ width: '100%', height: '670px', alignContent: 'center' }}></div>
+    </div>
+    {showModal && <CreateRoom lat={selectedLocation.lat} lng={selectedLocation.lng} closeModal={() => setShowModal(false)} roomName={roomName} setRoomName={setRoomName} />}
+    {showLocations && locations.map(location => <div key={location.id}>{location.name}</div>)}
+    {showRooms && rooms.map(room => <div key={room.id}>{room.name}</div>)}
+    {selectedRoom && <ChatRoom roomId={selectedRoom.id} />}
+  </>
   );
 };
 

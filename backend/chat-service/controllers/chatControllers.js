@@ -3,7 +3,8 @@ import { z } from 'zod';
 
 const roomInputSchema = z.object({
   roomName: z.string().min(1),
-  locationId: z.number().int(), // changed from location_id to locationId
+  lat: z.number(), 
+  lng: z.number(), 
 });
 
 export class ChatController {
@@ -42,10 +43,10 @@ export class ChatController {
       const roomInput = roomInputSchema.parse({ user_id: userId, ...req.body });
   
       // Log the values that will be passed to createChatRoom
-      console.log(`roomName: ${roomInput.roomName}, locationId: ${roomInput.locationId}, userId: ${userId}`);
+      console.log(`roomName: ${roomInput.roomName}, lat: ${roomInput.lat}, lng: ${roomInput.lng}, userId: ${userId}`);
   
       // Include the user_id in the call to createChatRoom
-      const newChatRoom = await ChatModel.createChatRoom(userId, roomInput.roomName, roomInput.locationId);
+      const newChatRoom = await ChatModel.createChatRoom(userId, roomInput.roomName, roomInput.lat, roomInput.lng);
   
       res.status(201).json({ message: 'Chat room created', newChatRoom });
     } catch (error) {

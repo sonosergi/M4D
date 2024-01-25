@@ -13,7 +13,8 @@ const createTables = async () => {
                     id SERIAL PRIMARY KEY,
                     user_id UUID NOT NULL REFERENCES users(user_id),
                     room_name VARCHAR(100) NOT NULL UNIQUE,
-                    location_id INT NOT NULL
+                    lat REAL NOT NULL,
+                    lng REAL NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS room_messages (
                     id SERIAL PRIMARY KEY,

@@ -1,17 +1,18 @@
 import React from 'react';
 import axios from 'axios';
 
-const CreateRoom = ({ locationId, closeModal, roomName, setRoomName }) => { // Recibimos roomName y setRoomName como props
+const CreateRoom = ({ lat, lng, closeModal, roomName, setRoomName }) => { 
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const token = localStorage.getItem('token');
-
     try {
       const response = await axios.post('http://localhost:7000/chat_rooms', 
-        { roomName, locationId },
-        { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } }
+        { roomName, lat, lng }, 
+        { 
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: true
+        }
       );
 
       console.log(response.data);
