@@ -37,14 +37,14 @@ export class ChatModel {
     return rooms;
   }
 
-  static async getChatRoom(roomName) {
-    if (!roomName) {
+  static async getChatRoom(roomId) {
+    if (!roomId) {
       throw new Error('Invalid input');
     }
 
     const room = await ChatDatabase.query(
-      'SELECT * FROM chat_rooms WHERE name = $1',
-      [roomName]
+      'SELECT * FROM chat_rooms WHERE id = $1',
+      [roomId]
     );
 
     return room[0] || null;
@@ -82,14 +82,14 @@ export class ChatModel {
     return { id: chatId, messages: [] };
   }
 
-  static async saveMessageInChatRoom(roomName, userId, content) {
-    if (!roomName || !userId || !content) {
+  static async saveMessageInChatRoom(roomId, userId, content) {
+    if (!roomId || !userId || !content) {
       throw new Error('Invalid input');
     }
-
+  
     await ChatDatabase.query(
-      'INSERT INTO room_messages (content, user_id, chat_room_id) SELECT $1, $2, id FROM chat_rooms WHERE name = $3',
-      [content, userId, roomName]
+      'INSERT INTO room_messages (content, user_id, chat_room_id) VALUES ($1, $2, $3)',
+      [content, userId, roomId]
     );
   }
 

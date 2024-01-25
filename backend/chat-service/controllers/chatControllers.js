@@ -61,6 +61,18 @@ export class ChatController {
     }
   }
 
+  handleMessage = (socket) => async (roomId, message) => {
+    const userId = socket.userId; // Obtén el userId del socket
+    console.log(`roomId: ${roomId}, userId: ${userId}, message: ${message}`); // Log the roomId, userId, and message
+    try {
+      await ChatModel.saveMessageInChatRoom(roomId, userId, message);
+      this.io.to(roomId).emit("message", message);
+      console.log(message);
+    } catch (error) {
+      socket.emit('error', 'An error occurred while sending the message');
+    }
+  }
+
   listChatRooms = async (req, res, next) => {
     try {
       const chatRooms = await ChatModel.listChatRooms();
@@ -81,15 +93,6 @@ export class ChatController {
       }
     } catch (error) {
       socket.emit('error', 'An error occurred while joining the private chat');
-    }
-  }
-
-  handleMessage = (socket) => async (roomId, message, userId) => {
-    try {
-      await ChatModel.saveMessageInChatRoom(roomId, userId, message);
-      this.io.to(roomId).emit("message", message);
-    } catch (error) {
-      socket.emit('error', 'An error occurred while sending the message');
     }
   }
 

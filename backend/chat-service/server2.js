@@ -1,3 +1,4 @@
+// server.js
 import express from 'express';
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -11,7 +12,6 @@ import { chatRoutes } from './v1/routes/chatRoutes.js';
 import { validateUser } from './middlewares/validateUser.js';
 import cors from 'cors';
 import cookie from 'cookie';
-import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -39,23 +39,15 @@ const io = new Server(httpServer, {
 });
 
 const chatController = new ChatController(io);
+
 app.use('/', chatRoutes(io));
 
 io.use((socket, next) => {
   if (socket.request.headers.cookie) {
     const cookies = cookie.parse(socket.request.headers.cookie);
     const token = cookies['token'];
-    console.log(token);
     if (token) {
-      jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
-        if (err) {
-          next(new Error('Invalid token'));
-        } else {
-          // Asocia el userId con el socket para uso futuro
-          socket.userId = user.id;
-          next();
-        }
-      });
+      next();
     } else {
       next(new Error('Authentication error'));
     }
@@ -64,14 +56,32 @@ io.use((socket, next) => {
   }
 });
 
-io.on("connection", (socket) => {
-  socket.on("joinRoom", chatController.handleConnection(socket));
-  socket.on("privateConnect", (roomId) => chatController.handlePrivateConnection(socket)(roomId));
-  socket.on("message", (roomId, message) => chatController.handleMessage(socket)(roomId, message));
-  socket.on("leaveRoom", (roomId) => chatController.handleLeaveRoom(socket)(roomId));
+io.on("connection", async (socket) => {
+  socket.on("joinRoom", (roomId) => {
+    chatController.handleConnection(socket)(roomId);
+  });
+
+  socket.on("privateConnect", (roomId) => {
+    chatController.handlePrivateConnection(socket)(roomId);
+  });
+
+  socket.on("message", (message) => {
+    chatController.handleMessage(socket)(message);
+  });
+
+  socket.on("leaveRoom", (roomId) => {
+    chatController.handleLeaveRoom(socket)(roomId);
+  });
+
+  socket.on("disconnect", () => {
+    // Handle disconnection here
+  });
+
+  socket.on("error", (error) => {
+    // Handle error here
+  });
 });
 
-const PORT = process.env.PORT ?? 7000;
-httpServer.listen(PORT, () => {
-    console.log(`Listening on port http://localhost:${PORT}`);
+httpServer.listen(7000, () => {
+  console.log('chat server running on port 7000')
 });
