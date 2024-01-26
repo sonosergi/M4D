@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import { ChatController } from './controllers/chatControllers.js';
 import { chatRoutes } from './v1/routes/chatRoutes.js';
 import { validateUser } from './middlewares/validateUser.js';
+import { ChatModel } from './models/chatModels.js';
 import cors from 'cors';
 import cookie from 'cookie';
 import jwt from 'jsonwebtoken';
@@ -38,8 +39,9 @@ const io = new Server(httpServer, {
   }
 });
 
-const chatController = new ChatController(io);
 app.use('/', chatRoutes(io));
+const chatController = new ChatController(io);
+
 
 io.use((socket, next) => {
   if (socket.request.headers.cookie) {
@@ -63,12 +65,25 @@ io.use((socket, next) => {
     next(new Error('Authentication error'));
   }
 });
-
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   socket.on("joinRoom", chatController.handleConnection(socket));
   socket.on("privateConnect", (roomId) => chatController.handlePrivateConnection(socket)(roomId));
   socket.on("message", (roomId, message) => chatController.handleMessage(socket)(roomId, message));
   socket.on("leaveRoom", (roomId) => chatController.handleLeaveRoom(socket)(roomId));
+  socket.on('usernameSet', chatController.handleUsernameSet(socket));
+  socket.on('getUsers', () => {
+  socket.emit('users', Object.values(chatController.connectedUsers));
+  socket.on("joinRoom", chatController.handleConnection(socket));
+  });
+
+  socket.on('getMessages', async () => {
+    try {
+      const messages = await ChatModel.getMessages();
+      socket.emit('messages', messages);
+    } catch (error) {
+      console.error('An error occurred while getting messages:', error);
+    }
+  });
 });
 
 const PORT = process.env.PORT ?? 7000;

@@ -10,6 +10,7 @@ const roomInputSchema = z.object({
 export class ChatController {
   constructor(io) {
     this.io = io;
+    this.connectedUsers = {};
   }
 
   handleConnection = (socket) => async (roomId) => {
@@ -62,13 +63,14 @@ export class ChatController {
   }
 
   handleMessage = (socket) => async (roomId, message) => {
-    const userId = socket.userId; // Obtén el userId del socket
-    console.log(`roomId: ${roomId}, userId: ${userId}, message: ${message}`); // Log the roomId, userId, and message
+    const userId = socket.userId; 
+    console.log(`roomId: ${roomId}, userId: ${userId}, message: ${message}`); 
     try {
       await ChatModel.saveMessageInChatRoom(roomId, userId, message);
       this.io.to(roomId).emit("message", message);
       console.log(message);
     } catch (error) {
+      console.error('An error occurred while sending the message:', error);
       socket.emit('error', 'An error occurred while sending the message');
     }
   }
@@ -81,6 +83,14 @@ export class ChatController {
     } catch (error) {
       next(error);
     }
+  }
+
+  handleUsernameSet = (socket) => (username) => {
+    const userId = socket.userId; 
+    const user = ChatModel.getUserbyId(userId);
+    socket.username = username;
+    this.connectedUsers[socket.id] = username;
+    this.io.emit('users', Object.values(this.connectedUsers));
   }
 
   handlePrivateConnection = (socket) => async (user1, user2) => {
@@ -125,8 +135,13 @@ export class ChatController {
     }
   }
 
-  handleLeaveRoom = (socket) => (roomId) => {
-    socket.leave(roomId);
+  handleLeaveRoom = (socket) => async (roomId) => {
+    try {
+      socket.leave(roomId);
+      console.log(`Client left room ${roomId}`);
+    } catch (error) {
+      socket.emit('error', 'An error occurred while leaving the room');
+    }
   }
 
   deleteChatRoom = async (req, res, next) => {

@@ -29,12 +29,32 @@ export class ChatModel {
     return newRoom[0];
   }
 
+  static async getUserbyId(userId) {
+    if (!userId) {
+      throw new Error('Invalid input');
+    }
+  
+    const user = await ChatDatabase.query(
+      'SELECT * FROM users WHERE id = $1',
+      [userId]
+    );
+  
+    return user[0] || null;
+  }
+
   static async listChatRooms() {
     const rooms = await ChatDatabase.query(
       'SELECT * FROM chat_rooms'
     );
 
     return rooms;
+  }
+
+  static async getMessages() {
+    const messages = await ChatDatabase.query(
+      'SELECT * FROM room_messages'
+    );
+    return messages;
   }
 
   static async getChatRoom(roomId) {
