@@ -1,112 +1,147 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
+import { useParams } from 'react-router-dom';
+import './ChatRoom.css';
 
-class ChatRoom extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      messages: [],
-      input: '',
-      users: [],
-      userColors: {},
-      isUsersListVisible: false
-    };
-    this.socketRef = React.createRef();
-    this.messagesEndRef = React.createRef();
-    this.colors = this.generateRandomColors(8);
+function generateRandomColors(count) {
+  const colors = [];
+  const saturation = 100;
+  const lightness = 50;
+
+  for (let i = 0; i < count; i++) {
+    const hue = Math.floor(Math.random() * 361);
+    const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    colors.push(color);
   }
 
-  generateRandomColors(count) {
-    const colors = [];
-    const saturation = 100;
-    const lightness = 50;
+  return colors;
+}
 
-    for (let i = 0; i < count; i++) {
-      const hue = Math.floor(Math.random() * 361);
-      const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-      colors.push(color);
-    }
+function ChatRoom() {
+  const { roomId } = useParams();
+  const [roomName, setRoomName] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [users, setUsers] = useState([]);
+  const [userColors, setUserColors] = useState({});
+  const [isUsersListVisible, setIsUsersListVisible] = useState(false);
+  const socketRef = useRef();
+  const messagesEndRef = useRef();
+  const colors = generateRandomColors(8);
 
-    return colors;
-  }
-
-  componentDidMount() {
+  useEffect(() => {
     const socket = io.connect(`http://localhost:7000`, {
       withCredentials: true
     });
   
-    this.socketRef.current = socket;
-  
-    socket.emit('joinRoom', this.props.roomId);
-  
-    socket.on('message', message => {
-      if (!this.state.userColors[message.user]) {
-        this.setState(state => ({ userColors: {...state.userColors, [message.user]: this.colors[Math.floor(Math.random() * this.colors.length)]} }));
+    socket.on('roomInfo', (roomInfo) => {
+      console.log('Received roomInfo:', roomInfo);
+      if (roomInfo && roomInfo.room_name) {
+        setRoomName(roomInfo.room_name);
+      } else {
+        console.error('Invalid roomInfo:', roomInfo);
       }
-      this.setState(state => ({ messages: [...state.messages, message] }));
     });
   
-    socket.on('users', users => {
-      this.setState({ users });
+    socketRef.current = socket;
+  
+    socket.on('connect', () => {
+      console.log('Connected to server');
+      socket.emit('joinRoom', roomId);
+      socket.emit('getMessages', roomId);
     });
     
-    socket.on('messages', messages => {
-      this.setState({ messages });
+    socket.on('ready', () => {
+      socket.emit('getUsers', roomId); 
+    });
+
+    socket.on('users', users => {
+      console.log('Received users:', users);
+      if (Array.isArray(users)) {
+        setUsers(users);
+        setUserColors(prevColors => {
+          const newColors = { ...prevColors };
+          users.forEach(user => {
+            if (!newColors[user.username]) {
+              newColors[user.username] = colors[Object.keys(newColors).length % colors.length];
+            }
+          });
+          return newColors;
+        });
+      } else {
+        console.error('Invalid users:', users);
+      }
+    });
+
+    socket.on('message', message => {
+      console.log('Received message:', message);
+      if (message && message.user && message.text) {
+        setUserColors(prevColors => {
+          const newColors = { ...prevColors };
+          if (!newColors[message.user]) {
+            newColors[message.user] = colors[Object.keys(newColors).length % colors.length];
+          }
+          setMessages(state => [...state, {...message, color: newColors[message.user]}]);
+          return newColors;
+        });
+      } else {
+        console.error('Invalid message:', message);
+      }
     });
   
-    // Emit the 'getUsers' and 'getMessages' events after joining the room
-    socket.emit('getUsers');
-    socket.emit('getMessages');
-  }
+    setTimeout(() => {
+      if (roomName === '') {
+        console.log('No roomInfo received, requesting roomInfo');
+        socket.emit('getRoomInfo', roomId);
+      }
+    }, 5000);
+  
+    return () => {
+      socket.disconnect();
+    };
+  }, [roomId]);
 
-  componentWillUnmount() {
-    this.socketRef.current.disconnect();
-  }
-
-  sendMessage = event => {
+  const sendMessage = (event) => {
     event.preventDefault();
-    if (this.state.input !== '') {
-      this.socketRef.current.emit('message', this.props.roomId, this.state.input);
-      console.log(this.state.input);
-      this.setState({ input: '' });
-      console.log(this.state.input);
+    if (input !== '') {
+      socketRef.current.emit('message', roomId, input);
+      setInput('');
     }
   };
 
-  toggleUsersList = () => {
-    this.setState(prevState => ({ isUsersListVisible: !prevState.isUsersListVisible }));
-    console.log(this.state.isUsersListVisible);
+  const toggleUsersList = () => {
+    setIsUsersListVisible(prevState => !prevState);
   };
 
-  render() {
-    return (
+  return (
+    <div className="chat-room">
       <div>
-        <h1>Room: {this.props.roomId}</h1>
-        <button onClick={this.toggleUsersList}>
-          {this.state.isUsersListVisible ? "Hide user list" : `Users (${this.state.users.length})`}
+        <h1>{roomName}</h1>
+        <button onClick={toggleUsersList} className="toggle-users">
+          {isUsersListVisible ? "Hide user list" : `Users (${users.length})`}
         </button>
-        {this.state.isUsersListVisible && this.state.users.map((user, index) => (
-          <p key={index} style={{color: this.state.userColors[user]}}>{user}</p>
+        {isUsersListVisible && users.map((user, index) => (
+          <p key={index} className="user" style={{ color: userColors[user.username] }}>{user.username}</p>
         ))}
-        <form onSubmit={this.sendMessage}>
-          <input
-            value={this.state.input}
-            onChange={e => this.setState({ input: e.target.value })}
-            placeholder="Type a message..."
-          />
-          <button>Send</button>
-        </form>
         <h2>Messages:</h2>
-        {this.state.messages.map((message, index) => (
-          <p key={index} style={{color: this.state.userColors[message.user]}}>
-            <strong>{message.user}: </strong>
-            {message.text}
-          </p>
+        {messages.map((message, index) => (
+          <div key={index} className="message">
+            <h2 style={{ color: message.color }}>{message.user}: {message.text}</h2>
+          </div>
         ))}
-        <div ref={this.messagesEndRef} />
+        <div ref={messagesEndRef} />
       </div>
-    );
-  }
+      <form onSubmit={sendMessage} className="message-form">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder="Type a message..."
+          className="message-input"
+        />
+        <button className="send-button">Send</button>
+      </form>
+    </div>
+  );
 }
 
 export default ChatRoom;

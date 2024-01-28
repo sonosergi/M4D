@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import path from 'path';
+import path, { join } from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { ChatController } from './controllers/chatControllers.js';
@@ -65,25 +65,47 @@ io.use((socket, next) => {
     next(new Error('Authentication error'));
   }
 });
+
 io.on("connection", async (socket) => {
-  socket.on("joinRoom", chatController.handleConnection(socket));
-  socket.on("privateConnect", (roomId) => chatController.handlePrivateConnection(socket)(roomId));
-  socket.on("message", (roomId, message) => chatController.handleMessage(socket)(roomId, message));
-  socket.on("leaveRoom", (roomId) => chatController.handleLeaveRoom(socket)(roomId));
-  socket.on('usernameSet', chatController.handleUsernameSet(socket));
-  socket.on('getUsers', () => {
-  socket.emit('users', Object.values(chatController.connectedUsers));
-  socket.on("joinRoom", chatController.handleConnection(socket));
+  socket.on("joinRoom", async (roomId) => {
+    console.log(`Client is trying to join room ${roomId}`);
+    await chatController.handleConnection(socket)(roomId);
+    const user = await ChatModel.getUserbyId(socket.userId);
+    chatController.connectedUsers[socket.id] = { username: socket.username, ...user };
+    io.to(roomId).emit('users', Object.values(chatController.connectedUsers));
   });
 
-  socket.on('getMessages', async () => {
+  io.emit('ready');
+
+  socket.on('usernameSet', (username) => {
+    chatController.handleUsernameSet(socket)(username);
+    io.emit('users', Object.values(chatController.connectedUsers));
+  });
+  socket.on('getUsers', (roomId) => {
+    const usersWithSocketIds = Object.entries(chatController.connectedUsers).map(([socketId, user]) => ({ socketId, user }));
+    io.to(roomId).emit('users', usersWithSocketIds);
+    console.log(usersWithSocketIds);
+  });
+
+  socket.on('getMessages', async (roomId) => {
     try {
       const messages = await ChatModel.getMessages();
-      socket.emit('messages', messages);
+      io.to(roomId).emit('messages', messages);
     } catch (error) {
       console.error('An error occurred while getting messages:', error);
     }
   });
+
+  socket.on("disconnect", () => {
+    delete chatController.connectedUsers[socket.id];
+    io.emit('users', Object.values(chatController.connectedUsers));
+  });
+
+  socket.on('message', (roomId, message) => {
+    console.log(`Received message from client: ${message}`);
+    chatController.handleMessage(socket)(roomId, message);
+  });
+
 });
 
 const PORT = process.env.PORT ?? 7000;

@@ -1,28 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
-import CreateRoom from './CreaterRoom';
 import axios from 'axios';
-import ChatRoom from './ChatRoom';
-
+import { useNavigate } from 'react-router-dom';
 
 axios.defaults.withCredentials = true;
 
 const API_MARKERS = 'http://localhost:5500/markers';
 const API_CHAT_ROOMS = 'http://localhost:7000/chat_rooms';
 
-const MapPage = () => {
-  const [selectedLocation, setSelectedLocation] = useState(null);
+const MapPage = ({ showLocations, showRooms, setShowModal, setSelectedLocation }) => {
   const [locations, setLocations] = useState([]);
   const [rooms, setRooms] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [roomName, setRoomName] = useState('');
-  const [showLocations, setShowLocations] = useState(false);
-  const [showRooms, setShowRooms] = useState(false);
-  const [markers, setMarkers] = useState([]);
-  const [selectedRoom, setSelectedRoom] = useState(null);
-
+  const [markers, setMarkers] = useState([]); // New state for markers
+  const navigate = useNavigate();
   const mapRef = useRef(null);
-  
 
   const fetchLocations = useCallback(async () => {
     try {
@@ -32,15 +23,6 @@ const MapPage = () => {
       console.error(error);
     }
   }, []);
-  
-  const toggleLocations = useCallback(() => {
-    if (showLocations) {
-      markers.forEach(marker => marker.setMap(null));
-      setMarkers([]);
-      setLocations([]);
-    }
-    setShowLocations(!showLocations);
-  }, [showLocations, markers]);
   
   useEffect(() => {
     if (showLocations) {
@@ -56,13 +38,6 @@ const MapPage = () => {
       console.error(error);
     }
   }, []);
-  
-  const toggleRooms = useCallback(() => {
-    if (showRooms) {
-      setRooms([]);
-    }
-    setShowRooms(!showRooms);
-  }, [showRooms]);
   
   useEffect(() => {
     if (showRooms) {
@@ -84,53 +59,54 @@ const MapPage = () => {
         disableDefaultUI: true,
       });
   
-      const newMarkers = locations.map(location => {
-        const marker = new google.maps.Marker({
-          position: { lat: location.lat, lng: location.lng },
-          map,
-          //icon: 'http://ruta/a/tu/otro/icono/personalizado.png',
-        });
+      if (showLocations) {
+        locations.forEach(location => {
+          const marker = new google.maps.Marker({
+            position: { lat: location.lat, lng: location.lng },
+            map,
+          });
   
-        marker.addListener("click", () => {
-          setSelectedLocation(location);
-          setShowModal(true);
-        });
+          setMarkers(prevMarkers => [...prevMarkers, marker]); // Add marker to state
   
-        return marker;
-      });
-  
-      const roomMarkers = rooms.map(room => {
-        const marker = new google.maps.Marker({
-          position: { lat: room.lat, lng: room.lng },
-          map,
-          //icon: 'http://ruta/a/tu/otro/icono/personalizado.png',
+          marker.addListener("click", () => {
+            setSelectedLocation(location);
+            setShowModal(true);
+          });
         });
-      
-        marker.addListener("click", () => {
-          setSelectedLocation({ lat: room.lat, lng: room.lng });
-          setSelectedRoom(room);
-          setShowModal(true);
-        });
-      
-        return marker;
-      });
+      }
   
-      setMarkers([...newMarkers, ...roomMarkers]);
+      if (showRooms) {
+        rooms.forEach(room => {
+          const marker = new google.maps.Marker({
+            position: { lat: room.lat, lng: room.lng },
+            map,
+          });
+        
+          setMarkers(prevMarkers => [...prevMarkers, marker]); // Add marker to state
+        
+          marker.addListener("click", () => {
+            setSelectedLocation({ lat: room.lat, lng: room.lng });
+            navigate(`/main/chat/${room.id}`);
+          });
+        });
+      }
     });
-  }, [locations, rooms]);
+  }, [locations, rooms, navigate, showLocations, showRooms]);
+
+  // New effect to remove markers when showLocations or showRooms changes
+  useEffect(() => {
+    markers.forEach(marker => marker.setMap(null));
+    setMarkers([]);
+  }, [showLocations, showRooms]);
 
   return (
-    <>
-    <div>
-      <button onClick={toggleLocations}>Search</button>
-      <button onClick={toggleRooms}>All Rooms</button>
-      <div ref={mapRef} style={{ width: '100%', height: '670px', alignContent: 'center' }}></div>
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div>
+        <div ref={mapRef} style={{ width: '100vw', height: '100vh', alignContent: 'center' }}></div>
+        {showLocations && locations.map(location => <div key={location.id}>{location.name}</div>)}
+        {showRooms && rooms.map(room => <div key={room.id}>{room.name}</div>)}
+      </div>
     </div>
-    {showModal && <CreateRoom lat={selectedLocation.lat} lng={selectedLocation.lng} closeModal={() => setShowModal(false)} roomName={roomName} setRoomName={setRoomName} />}
-    {showLocations && locations.map(location => <div key={location.id}>{location.name}</div>)}
-    {showRooms && rooms.map(room => <div key={room.id}>{room.name}</div>)}
-    {selectedRoom && <ChatRoom roomId={selectedRoom.id} />}
-  </>
   );
 };
 

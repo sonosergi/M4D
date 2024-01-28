@@ -17,8 +17,23 @@ export class ChatController {
     try {
       const chatRoom = await ChatModel.getChatRoom(roomId);
       if (chatRoom) {
+        socket.emit('roomInfo', { room_name: chatRoom.room_name });
+      }      const users = Object.values(this.connectedUsers);
+      socket.emit('users', users);
+  
+      const messages = await ChatModel.getMessages();
+      socket.emit('messages', messages);
+      if (chatRoom) {
         socket.join(roomId);
         console.log(`Client joined room ${roomId}`);
+  
+        // Emit 'users' event with the list of users in the chat room
+        const users = Object.values(this.connectedUsers);
+        socket.emit('users', users);
+  
+        // Emit 'messages' event with the list of messages in the chat room
+        const messages = await ChatModel.getMessages();
+        socket.emit('messages', messages);
       } else {
         socket.emit('error', 'Chat room does not exist');
         console.log(`Client tried to join non-existent room ${roomId}`);
@@ -26,7 +41,7 @@ export class ChatController {
     } catch (error) {
       socket.emit('error', 'An error occurred while joining the room');
     }
-  }
+  };
 
   createChatRoom = async (req, res, next) => {
     try {
@@ -67,8 +82,8 @@ export class ChatController {
     console.log(`roomId: ${roomId}, userId: ${userId}, message: ${message}`); 
     try {
       await ChatModel.saveMessageInChatRoom(roomId, userId, message);
-      this.io.to(roomId).emit("message", message);
-      console.log(message);
+      const user = this.connectedUsers[socket.id];
+      this.io.to(roomId).emit("message", { user: user.username, text: message });
     } catch (error) {
       console.error('An error occurred while sending the message:', error);
       socket.emit('error', 'An error occurred while sending the message');
@@ -85,14 +100,16 @@ export class ChatController {
     }
   }
 
-  handleUsernameSet = (socket) => (username) => {
+  handleUsernameSet = (socket) => async (username) => {
     const userId = socket.userId; 
-    const user = ChatModel.getUserbyId(userId);
+    const user = await ChatModel.getUserbyId(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
     socket.username = username;
-    this.connectedUsers[socket.id] = username;
-    this.io.emit('users', Object.values(this.connectedUsers));
+    this.connectedUsers[socket.id] = { username, ...user };
   }
-
+  
   handlePrivateConnection = (socket) => async (user1, user2) => {
     try {
       const privateChat = await ChatModel.createPrivateChat(user1, user2);
@@ -173,4 +190,3 @@ export class ChatController {
     }
   }
 }
-

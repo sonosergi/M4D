@@ -35,7 +35,7 @@ export class ChatModel {
     }
   
     const user = await ChatDatabase.query(
-      'SELECT * FROM users WHERE id = $1',
+      'SELECT * FROM users WHERE user_id = $1',
       [userId]
     );
   
@@ -58,16 +58,16 @@ export class ChatModel {
   }
 
   static async getChatRoom(roomId) {
-    if (!roomId) {
-      throw new Error('Invalid input');
+    try {
+      const chatRoom = await ChatDatabase.query(
+        'SELECT id, room_name FROM chat_rooms WHERE id = $1',
+        [roomId]
+      );
+      return chatRoom[0];
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
-
-    const room = await ChatDatabase.query(
-      'SELECT * FROM chat_rooms WHERE id = $1',
-      [roomId]
-    );
-
-    return room[0] || null;
   }
 
   static async deleteChatRoom(roomName) {
@@ -150,4 +150,3 @@ export class ChatModel {
     return messages;
   }
 }
-

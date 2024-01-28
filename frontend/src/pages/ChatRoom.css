@@ -1,0 +1,41 @@
+.chat-room {
+  font-family: 'Courier New';
+  background-color: #000;
+  color: #0F0;
+  padding: 10px;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.toggle-users {
+  background-color: #0F0;
+  color: #000;
+  border: none;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.message-form {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.message-input {
+  flex-grow: 1;
+  margin-right: 10px;
+  padding: 10px;
+  border: none;
+  background-color: #0F0;
+  color: #000;
+}
+
+.send-button {
+  background-color: #0F0;
+  color: #000;
+  border: none;
+  padding: 10px;
+}

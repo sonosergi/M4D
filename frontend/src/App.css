@@ -56,19 +56,87 @@ body {
 .main-container {
   display: flex;
   flex-direction: column;
-  align-items:  center;
-  justify-content: center;
-  width: 75vw; 
-  height: 90vh; 
-  overflow: hidden;
+  justify-content: space-between;
+  height: 99.3vh; 
+  width: 99.3vw;
+  overflow: hidden; 
+  overflow: auto; /* Evita el desbordamiento */
+  background-color: #000000; /* Fondo gris oscuro para un estilo retro */
+}
 
+.menu-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+  overflow: hidden;
+  border-radius: 10px;
+  background-color: #8b8b8b; /* Fondo gris claro para un estilo retro */
+  color: #ffffff; /* Texto blanco para un estilo retro */
 }
 
 .map-container {
-  width: 70%; 
-  height: 90%;
-  margin: 0;
-  padding: 0;
+  flex-grow: 1;
+  overflow: hidden;
+  overflow: auto;
+  margin: 5px;
   border-radius: 10px;
-  box-shadow: 0 0 10px 0 rgba(255, 255, 255, 0.3); 
+  box-shadow: 0 0 10px 0 rgba(56, 53, 53, 0.315);
+  background-color: #000000; /* Fondo gris más oscuro para el mapa */
+}
+
+.bottom-section {
+  display: flex;
+  overflow: hidden;
+  justify-content: center;
+  padding: 15px;
+  border-radius: 10px;
+  background-color: #8b8b8b; /* Fondo gris claro para un estilo retro */
+}
+
+.search-button {
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #1a9dc9;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
+  font-size: large;
+  color: white;
+}
+
+.search-button:hover {
+  background-color: #1706ac;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
+}
+
+.logout-button {
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #1a9dc9;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
+  font-size: large;
+  color: white;
+}
+
+.logout-button:hover {
+  background-color: #1706ac;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
+}
+
+.rooms-button {
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #1a9dc9;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
+  font-size: large;
+  color: white;
+}
+
+.rooms-button:hover {
+  background-color: #1706ac;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
 }
