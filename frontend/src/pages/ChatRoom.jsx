@@ -28,6 +28,11 @@ function ChatRoom() {
   const socketRef = useRef();
   const messagesEndRef = useRef();
   const colors = generateRandomColors(8);
+  const [file, setFile] = useState(null);
+  const [isSending, setIsSending] = useState(false);
+  const [isFileInputVisible, setIsFileInputVisible] = useState(false);
+
+
 
   useEffect(() => {
     const socket = io.connect(`http://localhost:7000`, {
@@ -41,6 +46,23 @@ function ChatRoom() {
       } else {
         console.error('Invalid roomInfo:', roomInfo);
       }
+    });
+
+    socket.on('file', (fileArray, filename, username) => {
+      const fileUint8Array = new Uint8Array(fileArray);
+      const blob = new Blob([fileUint8Array], { type: 'auto' });
+      const fileExtension = filename.split('.').pop();
+      const fileUrl = URL.createObjectURL(blob);
+      
+      setUserColors(prevColors => {
+        const newColors = { ...prevColors };
+        if (!newColors[username]) {
+          newColors[username] = colors[Object.keys(newColors).length % colors.length];
+        }
+        setMessages(messages => [...messages, { user: username, text: `${filename}`, fileUrl, fileExtension, color: newColors[username] }]);
+        return newColors;
+      });
+      setTimeout(() => URL.revokeObjectURL(fileUrl), 20000); // 20 seconds
     });
   
     socketRef.current = socket;
@@ -101,21 +123,47 @@ function ChatRoom() {
     };
   }, [roomId]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+  
   const sendMessage = (event) => {
     event.preventDefault();
+    setIsSending(true);
     if (input !== '') {
       socketRef.current.emit('message', roomId, input);
       setInput('');
     }
+    if (file !== null) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const fileArrayBuffer = reader.result;
+        console.log(fileArrayBuffer);
+        socketRef.current.emit('file', roomId, fileArrayBuffer, file.name);
+        setFile(null);
+        setIsSending(false);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      setIsSending(false);
+    }
+  };
+
+  const handleFileChange = (event) => {
+    setFile(event.target.files[0]);
   };
 
   const toggleUsersList = () => {
     setIsUsersListVisible(prevState => !prevState);
   };
 
+  const toggleFileInput = () => {
+    setIsFileInputVisible(prevState => !prevState);
+  };
+
   return (
     <div className="chat-room">
-      <div>
+      <div className="top-section">
         <h1>{roomName}</h1>
         <button onClick={toggleUsersList} className="toggle-users">
           {isUsersListVisible ? "Hide user list" : `Users (${users.length})`}
@@ -123,23 +171,48 @@ function ChatRoom() {
         {isUsersListVisible && users.map((user, index) => (
           <p key={index} className="user" style={{ color: userColors[user.username] }}>{user.username}</p>
         ))}
-        <h2>Messages:</h2>
+      </div>
+      <div className="middle-section">
         {messages.map((message, index) => (
           <div key={index} className="message">
-            <h2 style={{ color: message.color }}>{message.user}: {message.text}</h2>
+            <h2 style={{ color: message.color }}>
+              {message.user}:&nbsp;
+              {message.fileUrl ? (
+                <a href={message.fileUrl} download={message.text} style={{ color: message.color }}>{message.text}</a>
+              ) : (
+                <span>{message.text}</span>
+              )}
+            </h2>
+            {message.fileUrl && (
+              <div>
+                {message.fileExtension === 'png' || message.fileExtension === 'jpg' || message.fileExtension === 'jpeg' || message.fileExtension === 'gif' ? (
+                  <img src={message.fileUrl} alt={message.text} style={{ maxWidth: '300px' }} />
+                ) : message.fileExtension === 'mp4' || message.fileExtension === 'webm' ? (
+                  <video controls src={message.fileUrl} style={{ maxWidth: '300px' }} />
+                ) : message.fileExtension === 'mp3' || message.fileExtension === 'wav' || message.fileExtension === 'ogg' ? (
+                  <audio controls src={message.fileUrl} />
+                ) : null}
+              </div>
+            )}
           </div>
         ))}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} /> 
       </div>
-      <form onSubmit={sendMessage} className="message-form">
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Type a message..."
-          className="message-input"
-        />
-        <button className="send-button">Send</button>
-      </form>
+      <div className="bottom-section">
+        <form onSubmit={sendMessage} className="message-form">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Escribe un mensaje..."
+            className="message-input"
+          />
+          {isFileInputVisible && <input type="file" onChange={handleFileChange} />}
+          <button onClick={toggleFileInput} type="button">
+            {isFileInputVisible ? 'Ocultar' : 'Adjuntar archivo'}
+          </button>
+          <button className="send-button" disabled={isSending}>Enviar</button>      
+        </form>
+      </div>
     </div>
   );
 }

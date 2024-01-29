@@ -56,29 +56,34 @@ body {
 .main-container {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 99.3vh; 
-  width: 99.3vw;
+  justify-content: center;
+  height: 98.4vh; 
+  width: 99.1vw;
+  margin: 2px;
   overflow: hidden; 
-  overflow: auto; /* Evita el desbordamiento */
   background-color: #000000; /* Fondo gris oscuro para un estilo retro */
 }
 
 .menu-bar {
   display: flex;
   justify-content: space-between;
-  padding: 5px;
+  padding: 10px;
   overflow: hidden;
+  margin: 2px;
+  margin-bottom: 5px;
   border-radius: 10px;
-  background-color: #8b8b8b; /* Fondo gris claro para un estilo retro */
-  color: #ffffff; /* Texto blanco para un estilo retro */
+  background-color: #5c623d; /* Dark green background */
+  color: #f0f4c3; /* Light text */
+  border-bottom: 5px solid #7b8a3f; /* Dark green border */
 }
 
 .map-container {
   flex-grow: 1;
   overflow: hidden;
-  overflow: auto;
   margin: 5px;
+  height: 100vh;
+  width: 100vw;
+  margin: 2px; 
   border-radius: 10px;
   box-shadow: 0 0 10px 0 rgba(56, 53, 53, 0.315);
   background-color: #000000; /* Fondo gris más oscuro para el mapa */
@@ -86,11 +91,16 @@ body {
 
 .bottom-section {
   display: flex;
+  justify-content: center; /* Centra los elementos horizontalmente */
+  align-items: center; /* Centra los elementos verticalmente */
+  padding: 10px;
   overflow: hidden;
-  justify-content: center;
-  padding: 15px;
+  margin: 2px;
+  margin-top: 5px;
   border-radius: 10px;
-  background-color: #8b8b8b; /* Fondo gris claro para un estilo retro */
+  background-color: #5c623d; /* Dark green background */
+  color: #f0f4c3; /* Light text */
+  border-top: 5px solid #7b8a3f; /* Dark green border */
 }
 
 .search-button {
@@ -98,14 +108,14 @@ body {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background-color: #1a9dc9;
+  background-color: #4d7502;
   box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
   font-size: large;
   color: white;
 }
 
 .search-button:hover {
-  background-color: #1706ac;
+  background-color: #4c9c01e1;
   box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
 }
 
@@ -114,14 +124,14 @@ body {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background-color: #1a9dc9;
+  background-color: #4d7502;
   box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
   font-size: large;
   color: white;
 }
 
 .logout-button:hover {
-  background-color: #1706ac;
+  background-color: #4c9c01e1;
   box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
 }
 
@@ -130,13 +140,13 @@ body {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background-color: #1a9dc9;
+  background-color: #4d7502;
   box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
   font-size: large;
   color: white;
 }
 
 .rooms-button:hover {
-  background-color: #1706ac;
+  background-color: #4c9c01e1;
   box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
 }
