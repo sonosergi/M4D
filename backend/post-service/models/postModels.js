@@ -1,26 +1,67 @@
-import pgp from 'pg-promise';
-import dotenv from 'dotenv';
+import { PostDatabase } from "../databases/postDatabases.js"; 
+import { z } from 'zod';
 
-dotenv.config();
+const postInputSchema = z.object({
+  user_id: z.string().uuid(),
+  roomName: z.string().min(1),
+  lat: z.number(), 
+  lng: z.number(), 
+});
 
-const db = pgp()(process.env.DATABASE_URL);
-
-class UserModel {
-  static async getUser(id) {
-    return db.one('SELECT * FROM users WHERE id = $1', [id]);
+class PostModel {
+  constructor(postData) {
+    this.data = postData;
   }
 
-  static async updateUser(id, name, email) {
-    return db.one('UPDATE auth SET name = $1, email = $2 WHERE id = $3 RETURNING *', [name, email, id]);
+  async save() {
+    return await PostDatabase.createPost(this.data);
   }
 
-  static async deleteUser(id) {
-    return db.none('DELETE FROM auth & user WHERE id = $1', [id]);
+  static async createPost(user_id, roomName, lat, lng) {
+    const postInput = postInputSchema.parse({ user_id, roomName, lat, lng });
+  
+    const existingPost = await PostDatabase.query(
+      'SELECT * FROM posts WHERE room_name = $1',
+      [postInput.roomName]
+    );
+  
+    if (existingPost.length > 0) {
+      throw new Error('Post already exists');
+    }
+  
+    const newPost = await PostDatabase.query(
+      'INSERT INTO posts (user_id, room_name, lat, lng) VALUES ($1, $2, $3, $4) RETURNING *',
+      [postInput.user_id, postInput.roomName, postInput.lat, postInput.lng]
+    );
+  
+    return newPost[0];
   }
 
-  static async changePassword(id, newPassword) {
-    return db.none('UPDATE auth SET password = $1 WHERE id = $2', [newPassword, id]);
+  static async find() {
+    return await PostDatabase.getAllPosts();
+  }
+
+  static async findById(id) {
+    return await PostDatabase.getPostById(id);
+  }
+
+  static async findByIdAndUpdate(id, data, options) {
+    return await PostDatabase.updatePostById(id, data, options);
+  }
+
+  static async findByIdAndDelete(id) {
+    return await PostDatabase.deletePostById(id);
+  }
+
+  async addComment(comment) {
+    this.data.comments.push(comment);
+    return await PostDatabase.updatePostById(this.data.id, this.data);
+  }
+
+  async likePost() {
+    this.data.likes += 1;
+    return await PostDatabase.updatePostById(this.data.id, this.data);
   }
 }
 
-module.exports = UserModel;
+export default PostModel;

@@ -1,33 +1,53 @@
+/* LoginPages.css */
+
 body {
   background-color: black;
-  color: white;
-  font-family: 'Courier New', Courier, monospace;
+  color: #f0f4c3;
+  font-family: 'Minecraft', monospace;
+  display: flex;
+  justify-content: center; 
+  align-items: center;
+  height: 100vh; 
+  margin: 0;
+  padding: 0; 
 }
 
 .login-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
+  align-content: center;
+  background-color: #000000;
+  font-family: 'Minecraft', sans-serif;
+  color: #f2f2f2;
+  padding: 20px;
+  border: 5px solid #41551d;
   border-radius: 10px;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  width: 120%; 
+  max-width: 500px; 
 }
 
 .login-form {
-  display: flex;
-  flex-direction: column;
-  width: 300px;
-  border: 2px solid white;
+  background-color: #5c623d;
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px 0 rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
+  border: 1px solid #a5b489;
+  width: 80%; 
+  display: flex; 
+  flex-direction: column;
+  align-items: center; 
+  justify-content: center; 
 }
 
 .login-form input {
-  margin-bottom: 13px;
+  background-color: #000000;
+  color: #f2f2f2;
+  border: 1px solid #a5b489;
   padding: 10px;
-  border: none;
+  margin-bottom: 10px;
   border-radius: 5px;
+  width: 80%; 
 }
 
 .login-form button {
@@ -35,118 +55,43 @@ body {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background-color: #1a9dc9;
-  box-shadow: 0 0 10px 0 rgba(255, 255, 255, 0.3);
+  width: 80%;
+  align-items: center;
+  background-color: #4d7502;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
   font-size: large;
   color: white;
 }
-
 .login-form button:hover {
-  background-color: #1706ac;
-  box-shadow: 0 0 10px 0 rgba(255, 255, 255, 0.3);
+  background-color: #4c9c01e1;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
 }
 
 .error-message {
-  color: red;
-  margin-top: 10px;
+  color: #ff5555;
 }
 
-/* MainPage.css */
-
-.main-container {
+.switch-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
   justify-content: center;
-  height: 98.4vh; 
-  width: 99.1vw;
-  margin: 2px;
-  overflow: hidden; 
-  background-color: #000000; /* Fondo gris oscuro para un estilo retro */
+  align-items: center;
 }
 
-.menu-bar {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  overflow: hidden;
-  margin: 2px;
-  margin-bottom: 5px;
-  border-radius: 10px;
-  background-color: #5c623d; /* Dark green background */
-  color: #f0f4c3; /* Light text */
-  border-bottom: 5px solid #7b8a3f; /* Dark green border */
-}
-
-.map-container {
-  flex-grow: 1;
-  overflow: hidden;
-  margin: 5px;
-  height: 100vh;
-  width: 100vw;
-  margin: 2px; 
-  border-radius: 10px;
-  box-shadow: 0 0 10px 0 rgba(56, 53, 53, 0.315);
-  background-color: #000000; /* Fondo gris más oscuro para el mapa */
-}
-
-.bottom-section {
-  display: flex;
-  justify-content: center; /* Centra los elementos horizontalmente */
-  align-items: center; /* Centra los elementos verticalmente */
-  padding: 10px;
-  overflow: hidden;
-  margin: 2px;
-  margin-top: 5px;
-  border-radius: 10px;
-  background-color: #5c623d; /* Dark green background */
-  color: #f0f4c3; /* Light text */
-  border-top: 5px solid #7b8a3f; /* Dark green border */
-}
-
-.search-button {
+.register-button {
   padding: 10px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background-color: #4d7502;
-  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
-  font-size: large;
+  width: 80%;
+  background-color: #273807;
+  box-shadow: 0 0 10px 0 rgba(39, 34, 34, 0.616);
+  font-size: small;
   color: white;
 }
 
-.search-button:hover {
+.register-button:hover {
   background-color: #4c9c01e1;
   box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
 }
 
-.logout-button {
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  background-color: #4d7502;
-  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
-  font-size: large;
-  color: white;
-}
-
-.logout-button:hover {
-  background-color: #4c9c01e1;
-  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
-}
-
-.rooms-button {
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  background-color: #4d7502;
-  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
-  font-size: large;
-  color: white;
-}
-
-.rooms-button:hover {
-  background-color: #4c9c01e1;
-  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
-}

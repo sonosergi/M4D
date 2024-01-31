@@ -28,7 +28,6 @@ function LoginPage({ onLogin }) {
     try {
       const response = await axios.post(url, form);
       console.log(response.data);
-      // Si el inicio de sesión es exitoso, guarda el token JWT en el almacenamiento local
       if (response.status === 200) {
         localStorage.setItem('jwt', response.data.token);
         onLogin();
@@ -54,9 +53,12 @@ function LoginPage({ onLogin }) {
         <button type="submit">{isLogin ? 'Iniciar sesión' : 'Registrarse'}</button>
       </form>
       {error && <p className="error-message">{error}</p>}
-      <button onClick={() => setIsLogin(!isLogin)}>
-        {isLogin ? '¿No tienes una cuenta? Regístrate' : '¿Ya tienes una cuenta? Inicia sesión'}
-      </button>
+      <div className="switch-container" onClick={() => setIsLogin(!isLogin)}>
+        <p>{isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}</p>
+        <button className="register-button">
+          {isLogin ? 'Regístrate' : 'Inicia sesión'}
+        </button>
+      </div>
     </div>
   );
 }

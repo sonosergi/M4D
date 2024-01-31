@@ -70,6 +70,29 @@ export class ChatModel {
     }
   }
 
+  static async fetchChatRooms(lat, lng) {
+    try {
+      if (!lat || !lng) {
+        throw new Error('Invalid input');
+      }
+      else {
+        const chatRooms = await ChatDatabase.query(
+          'SELECT * FROM chat_rooms WHERE lat = $1 AND lng = $2',
+          [lat, lng]
+        );
+        console.log(chatRooms); // Add this line to log the result of the query
+        if (chatRooms && chatRooms.length > 0) {
+          return chatRooms[0].id; // Devuelve solo el ID de la primera sala de chat
+        } else {
+          throw new Error('No chat room found');
+        }
+      }
+    } catch (error) {
+      console.error('Error querying the database:', error);
+      throw error;
+    }
+  }
+
   static async deleteChatRoom(roomName) {
     if (!roomName) {
       throw new Error('Invalid input');

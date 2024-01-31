@@ -16,6 +16,18 @@ const CreateRoom = ({ lat, lng, closeModal, roomName, setRoomName }) => {
       );
 
       console.log(response.data);
+
+      // Make a second axios.post call to create a post
+      const postResponse = await axios.post('http://localhost:10000/post', 
+        { roomName, lat, lng }, 
+        { 
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: true
+        }
+      );
+
+      console.log(postResponse.data);
+
       closeModal();
     } catch (error) {
       console.error(error);

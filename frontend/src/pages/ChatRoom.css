@@ -30,6 +30,7 @@
   padding: 10px;
   border: none;
   border-radius: 10px;
+  width: auto;
   cursor: pointer;
   background-color: #4d7502;
   box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
@@ -54,19 +55,19 @@
   flex-direction: column;
   overflow: auto;
   border: 2px solid #7b8a3f;
-  margin: 10px;
+  margin: 5px;
   height: 98vh;
-  width: 98vw;
+  width: auto;
   border-radius: 10px;
   box-shadow: 0 0 10px 0 rgba(255, 255, 255, 0.3);
   background-color: #000000;
 }
 
 .message {
-  font-family: Arial, sans-serif; /* Cambia la fuente a Arial, que es más fácil de leer */
-  line-height: 0.10; /* Ajusta el interlineado */
-  color: inherit; /* Mantiene los colores asignados */
-  margin-left: 12px; /* Agrega un margen a la izquierda */
+  font-family: Arial, sans-serif;
+  line-height: 0.10; 
+  color: inherit; 
+  margin-left: 12px; 
   margin-right: 20px;
   font-size: small;
 }
@@ -78,8 +79,9 @@
   margin: 1px;
   background-color: #5c623d;
   color: #f0f4c3;
+  width: auto;
   font-family: 'Minecraft', monospace;
-  padding: 40px;
+  padding: 20px;
   border-top: 5px solid #7b8a3f;
   margin-top: 5px;
 }

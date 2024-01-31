@@ -110,6 +110,16 @@ export class ChatController {
     this.connectedUsers[socket.id] = { username, ...user };
   }
   
+  fetchChatRooms = async (req, res, next) => {
+    try {
+      const { lat, lng } = req.query;
+      const chatRoomId = await ChatModel.fetchChatRooms(lat, lng);
+      res.json({ id: chatRoomId });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   handlePrivateConnection = (socket) => async (user1, user2) => {
     try {
       const privateChat = await ChatModel.createPrivateChat(user1, user2);

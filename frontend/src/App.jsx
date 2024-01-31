@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginPage from './pages/LoginPages';
 import MainPage from './pages/MainPage';
 import ChatRoom from './pages/ChatRoom';
+import PostPage from './pages/PostPage';
 import './App.css'
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
       <Routes>
         <Route path="/main/*" element={isLoggedIn ? <MainPage onLogout={handleLogout} /> : <Navigate to="/" />} />
         <Route path="/main/chat/:roomId" element={isLoggedIn ? <ChatRoom /> : <Navigate to="/" />} />
+        <Route path="/main/post/:id" element={isLoggedIn ? <PostPage /> : <Navigate to="/" />} />
         <Route path="/" element={<LoginPage onLogin={handleLogin} />} />
       </Routes>
     </Router>

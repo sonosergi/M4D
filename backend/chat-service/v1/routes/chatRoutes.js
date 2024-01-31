@@ -8,6 +8,7 @@ export const chatRoutes = (io) => {
   chatRoutes.post('/chat_rooms', (req, res, next) => chatController.createChatRoom(req, res, next));
   chatRoutes.delete('/chat_rooms/:id', (req, res, next) => chatController.deleteChatRoom(req, res, next));
   chatRoutes.get('/chat_rooms', (req, res, next) => chatController.listChatRooms(req, res, next));
+  chatRoutes.get ('/get_id_chat', (req, res, next) => chatController.fetchChatRooms(req, res, next));
 
   chatRoutes.post('/chat_rooms/:id/messages', (req, res, next) => chatController.handleMessage(req, res, next));
   chatRoutes.get('/chat_rooms/:id/messages', (req, res, next) => chatController.fetchMessages(req, res, next));
