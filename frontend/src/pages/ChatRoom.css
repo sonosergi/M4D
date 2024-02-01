@@ -1,10 +1,19 @@
 .chat-room {
   display: flex;
   flex-direction: column;
-  height: 98.3vh;
-  width: 99.1vw;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 4px);
+  width: calc(100vw - 4px);
+  margin: 2px;
   overflow: auto;
   background-color: #000000;
+  box-sizing: border-box;
+}
+
+.top-section, .middle-section, .bottom-section {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .top-section {
@@ -14,8 +23,7 @@
   background-color: #5c623d;
   color: #f0f4c3;
   font-family: 'Minecraft', monospace;
-  margin: 1px;
-  padding: 20px;
+  padding: 10px;
   border-radius: 10px;
   border-bottom: 5px solid #7b8a3f;
   margin-bottom: 5px;
@@ -54,12 +62,10 @@
   display: flex;
   flex-direction: column;
   overflow: auto;
-  border: 2px solid #7b8a3f;
+  border: #3a3b36 solid 3px;
   margin: 5px;
-  height: 98vh;
-  width: auto;
   border-radius: 10px;
-  box-shadow: 0 0 10px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10px 0 rgba(56, 53, 53, 0.315);
   background-color: #000000;
 }
 
@@ -79,9 +85,57 @@
   margin: 1px;
   background-color: #5c623d;
   color: #f0f4c3;
-  width: auto;
+  width: 100%;
   font-family: 'Minecraft', monospace;
   padding: 20px;
+  border-top: 5px solid #7b8a3f;
+  margin-top: 5px;
+}
+
+.message-form {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.message-input {
+  flex-grow: 1;
+  align-self: center;
+  margin-right: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px 0 #7b8a3f;
+  background-color: #000000;
+  color: #ffffff;
+  font-family: 'Minecraft', monospace;
+  font-size: small;
+}
+
+.send-button {
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #4d7502;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
+  font-size: large;
+  color: white;
+}
+
+.send-button:hover {
+  background-color: #4c9c01e1;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
+}
+
+.bottom-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #5c623d;
+  color: #f0f4c3;
+  font-family: 'Minecraft', monospace;
+  padding: 20px;
+  border-radius: 10px;
   border-top: 5px solid #7b8a3f;
   margin-top: 5px;
 }

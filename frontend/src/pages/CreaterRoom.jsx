@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react'; // Import useState
 import axios from 'axios';
 
 const CreateRoom = ({ lat, lng, closeModal, roomName, setRoomName }) => { 
+  const [description, setDescription] = useState(''); // Define description and setDescription
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -19,7 +20,7 @@ const CreateRoom = ({ lat, lng, closeModal, roomName, setRoomName }) => {
 
       // Make a second axios.post call to create a post
       const postResponse = await axios.post('http://localhost:10000/post', 
-        { roomName, lat, lng }, 
+        { roomName, description, lat, lng }, // Use description here
         { 
           headers: { 'Content-Type': 'application/json' },
           withCredentials: true
@@ -37,6 +38,7 @@ const CreateRoom = ({ lat, lng, closeModal, roomName, setRoomName }) => {
   return (
     <form onSubmit={handleSubmit}>
       <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} required />
+      <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" required /> {/* Use description here */}
       <button type="submit">Create Room</button>
     </form>
   );

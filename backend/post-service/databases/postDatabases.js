@@ -13,9 +13,33 @@ const createTables = async () => {
                 id SERIAL PRIMARY KEY,
                 user_id UUID NOT NULL REFERENCES users(user_id),
                 room_name VARCHAR(100) NOT NULL UNIQUE,
+                description VARCHAR(1000) NOT NULL,
+                stars INT NOT NULL DEFAULT 0,
                 lat REAL NOT NULL,
                 lng REAL NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS publications (
+                id SERIAL PRIMARY KEY,
+                post_id INT NOT NULL REFERENCES posts(id),
+                title VARCHAR(100) NOT NULL,
+                description VARCHAR(1000) NOT NULL,
+                image_url VARCHAR(1000),
+                user_id UUID NOT NULL,
+                time TIMESTAMP NOT NULL,
+                likes INT NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS comments (
+                id SERIAL PRIMARY KEY,
+                publication_id INT NOT NULL REFERENCES publications(id),
+                user_id UUID NOT NULL,
+                text VARCHAR(1000) NOT NULL,
+                time TIMESTAMP NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS stars (
+                id SERIAL PRIMARY KEY,
+                user_id UUID NOT NULL REFERENCES users(user_id),
+                post_id INT NOT NULL REFERENCES posts(id),
+                time TIMESTAMP NOT NULL);
         `);
         });
         console.log('Tables created successfully');

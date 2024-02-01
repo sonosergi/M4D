@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 // This is your JWT token
-const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImQzMzQ3YjNiLWEwMDctNDgzYy04M2M0LWYxNTY5ZDkwZjZmOSIsImlhdCI6MTcwNjAwNjg2MCwiZXhwIjoxNzA2MDEwNDYwfQ.AbpqvQjqBNMhdNffjKdOF20jDfCl9plRlx6R0fXLkII';
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijc0NGU4ZDBhLTVhN2YtNDI5ZC1iZDdjLWZjN2NhNWZhMmE4YyIsImlhdCI6MTcwNjcwODYwOCwiZXhwIjoxNzA2NzEyMjA4fQ.V7TH-crf23niSAH6c-ovmRv9XqQ7xSwxocD1pRKX_aU';
 
 // Decode the token
 const decodedToken = jwt.decode(token);

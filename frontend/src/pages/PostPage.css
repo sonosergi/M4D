@@ -1,14 +1,24 @@
-/* PostPage.css */
+body, html {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 .master-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  height: 98.4vh; 
-  width: 99.1vw;
+  align-items: center;
+  height: calc(100vh - 4px); 
+  width: calc(100vw - 4px);
   margin: 2px;
-  overflow: hidden; 
+  overflow: auto; 
   background-color: #000000; 
+}
+
+.post-bar, .post-container, .post-section, .enter-chat {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .post-bar {
@@ -17,7 +27,6 @@
   align-items: center;
   padding: 10px;
   overflow: hidden;
-  width: auto;
   margin: 2px;
   margin-bottom: 5px;
   border-radius: 10px;
@@ -28,29 +37,66 @@
 
 .post-container {
   flex-grow: 1;
-  overflow: hidden;
+  overflow: auto;
   margin: 5px;
-  height: 100vh;
-  width: auto;
-  margin: 2px; 
   border: #3a3b36 solid 3px;
   border-radius: 10px;
   box-shadow: 0 0 10px 0 rgba(56, 53, 53, 0.315);
-  background-color: #000000; 
+  background-color: #000000;
+  padding: 20px; 
+}
+
+.publication {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  background-color: #48573d; 
+  color: #f0f4c3;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-family: Arial, sans-serif;
+  line-height: 0.10; 
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header h2 {
+  margin-right: 20px; 
 }
 
 .post-section {
   display: flex;
   justify-content: center;
   align-items: center; 
-  padding: 20px;
+  padding: 40px;
   overflow: hidden;
   margin: 2px;
   margin-top: 5px;
   border-radius: 10px;
-  width: auto;
   background-color: #5c623d; 
   color: #f0f4c3; 
   border-top: 5px solid #7b8a3f;
 }
 
+.enter-chat {
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  align-items: center;
+  background-color: #4d7502;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
+  font-size: large;
+  margin: 2px;
+  color: white;
+}
+
+.enter-chat:hover {
+  background-color: #4c9c01e1;
+  box-shadow: 0 0 10px 0 rgba(15, 8, 8, 0.616);
+}
