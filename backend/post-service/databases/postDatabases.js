@@ -39,7 +39,14 @@ const createTables = async () => {
                 id SERIAL PRIMARY KEY,
                 user_id UUID NOT NULL REFERENCES users(user_id),
                 post_id INT NOT NULL REFERENCES posts(id),
-                time TIMESTAMP NOT NULL);
+                time TIMESTAMP NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS likes (
+                id SERIAL PRIMARY KEY,
+                user_id UUID NOT NULL REFERENCES users(user_id),
+                publication_id INT NOT NULL REFERENCES publications(id),
+                time TIMESTAMP NOT NULL
+            );
         `);
         });
         console.log('Tables created successfully');
@@ -72,12 +79,5 @@ export class PostDatabase {
     static async getAllPosts() {
         const query = 'SELECT * FROM posts';
         return await this.query(query);
-    }
-
-    static async getPostById(id) {
-        const query = 'SELECT * FROM posts WHERE id = $1';
-        const parameters = [id];
-        const result = await this.query(query, parameters);
-        return result.length > 0 ? result[0] : null;
     }
 }

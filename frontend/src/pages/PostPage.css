@@ -50,14 +50,15 @@ body, html {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   border-radius: 10px;
   background-color: #48573d; 
   color: #f0f4c3;
   margin-top: 20px;
   margin-bottom: 20px;
   font-family: Arial, sans-serif;
-  line-height: 0.10; 
+  line-height: 0.10;
+  padding: 20px; 
 }
 
 .header {

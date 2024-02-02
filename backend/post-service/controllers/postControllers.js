@@ -50,9 +50,23 @@ export const PostController = {
     res.status(200).send(posts);
   },
 
-  getPost: async (req, res) => {
-    const post = await PostModel.findById(req.params.id);
-    res.status(200).send(post);
+  getPost: async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+  
+      const userId = req.user.id;
+      const {post_id} = req.query;
+      console.log(`post_id: ${post_id}, userId: ${userId}`);
+  
+      const post = await PostModel.findById(post_id, userId);
+  
+      res.status(200).send(post);
+    } catch (error) {
+      console.error(error);
+      next(new Error('An error occurred while getting the post'));
+    }
   },
 
   updatePost: async (req, res) => {
@@ -66,25 +80,22 @@ export const PostController = {
   },
 
   updateStars: async (req, res) => {
-    const { post_id } = req.body; // Extrae post_id del cuerpo de la solicitud
+    const { post_id } = req.body; 
   
-    // Check if the user is authenticated
     if (!req.user) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
   
-    // Extract the user_id from req.user
     const user_id = req.user.id;
   
     console.log(`post_id: ${post_id}, user_id: ${user_id}`);
-    // Verifica que post_id y user_id estén presentes
     if (!post_id || !user_id) {
       return res.status(400).send({ error: 'post_id and user_id are required' });
     }
   
     try {
       const result = await PostModel.updateStars(post_id, user_id);
-      res.status(200).send(result); // Envía el objeto result como la respuesta HTTP
+      res.status(200).send(result); 
     } catch (error) {
       console.error(error);
       res.status(500).send({ error: 'An error occurred while updating stars' });
@@ -118,13 +129,38 @@ export const PostController = {
   },
 
   updateLikes: async (req, res) => {
-    const publication = await PostModel.updateLikes(req.params.id, req.body.likes);
-    res.status(200).send(publication);
+    const { publication_id } = req.body;
+  
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+  
+    const user_id = req.user.id;
+  
+    console.log(`publication_id: ${publication_id}, user_id: ${user_id}`);
+    if (!publication_id || !user_id) {
+      return res.status(400).send({ error: 'publication_id and user_id are required' });
+    }
+  
+    try {
+      const result = await PostModel.updateLikes(publication_id, user_id);
+      res.status(200).send(result);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ error: 'An error occurred while updating likes' });
+    }
   },
 
   addComment: async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+  
+    const user_id = req.user.id;
+  
     try {
-      const newComment = await PostModel.addComment(req.body);
+      const { publication_id, text } = req.body;
+      const newComment = await PostModel.addComment({ user_id, publication_id, text });
       res.status(201).json({ message: 'Comment created', newComment });
     } catch (error) {
       console.error(error);
@@ -133,8 +169,23 @@ export const PostController = {
   },
 
   getComments: async (req, res) => {
-    const comments = await PostModel.getComments();
-    res.status(200).send(comments);
+    try {
+      const comments = await PostModel.getComments();
+      const commentsWithUsername = comments.map(comment => {
+        return {
+          id: comment.id,
+          publication_id: comment.publication_id,
+          username: comment.username,
+          text: comment.text,
+          time: comment.time
+        }
+      });
+      res.status(200).send(commentsWithUsername);
+      console.log(commentsWithUsername);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Error retrieving comments' });
+    }
   },
 
   deleteComment: async (req, res) => {

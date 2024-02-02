@@ -5,7 +5,6 @@ import './PostPage.css';
 import moment from 'moment';
 
 axios.defaults.withCredentials = true;
-moment.locale('es');
 
 const PostPage = () => {
   const { id } = useParams();
@@ -25,19 +24,24 @@ const PostPage = () => {
   });
   const [showNewPublicationForm, setShowNewPublicationForm] = useState(false);
   const [starCount, setStarCount] = useState(0);
-
-
+  const [isUserPost, setIsUserPost] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:10000/post/${id}`);
+        const response = await axios.get(`http://localhost:10000/getPost`, { params: {post_id: id} } );
         if (response.status === 404) {
           console.error('Post not found');
           return;
         }
-        setPost(response.data);
+        setPost(response.data); 
+        console.log(response.data);
+        setIsUserPost(response.data.isUserPost); 
+        console.log(response.data.isUserPost);
+        setStarCount(response.data.stars || 0);
+        console.log(response.data.stars);
+
         if (!chatRoomId.current) {
           const chatRoomResponse = await axios.get(`http://localhost:7000/get_id_chat`, {
             params: {
@@ -49,8 +53,16 @@ const PostPage = () => {
         }
         const publicationsResponse = await axios.get(`http://localhost:10000/publications`, { params: { post_id: id } });
         setPublications(publicationsResponse.data);
+        console.log(publicationsResponse.data);
         const commentsResponse = await axios.get(`http://localhost:10000/comments`);
-        setComments(commentsResponse.data);
+        const commentsByPublicationId = commentsResponse.data.reduce((acc, comment) => {
+          if (!acc[comment.publication_id]) {
+            acc[comment.publication_id] = [];
+          }
+          acc[comment.publication_id].push(comment);
+          return acc;
+        }, {});
+        setComments(commentsByPublicationId);
       } catch (error) {
         console.error(error);
       } finally {
@@ -102,20 +114,22 @@ const PostPage = () => {
     }
   };
 
-  const handleNewComment = async () => {
+  const handleNewComment = async (publicationId, commentText) => {
     try {
-      const response = await axios.post(`http://localhost:10000/comment`, { text: newComment });
-      setComments([...comments, response.data]);
-      setNewComment('');
+      const response = await axios.post(`http://localhost:10000/addComment`, { publication_id: publicationId, text: commentText });
+      setComments(prevComments => [...prevComments, response.data]);
     } catch (error) {
       console.error(error);
     }
   };
 
   const handleLike = async (publicationId) => {
+    console.log(publicationId);
     try {
-      const response = await axios.put(`http://localhost:10000/publication/${publicationId}/likes`);
-      setPublications(publications.map(pub => pub.id === publicationId ? response.data : pub));
+      const response = await axios.put(`http://localhost:10000/updateLikes`, { publication_id: publicationId });
+      const updatedPub = publications.map(pub => pub.id === publicationId ? response.data : pub);
+      setPublications(updatedPub);
+      return updatedPub.find(pub => pub.id === publicationId);
     } catch (error) {
       console.error(error);
     }
@@ -124,25 +138,51 @@ const PostPage = () => {
   const handleStar = async () => {
     try {
       const response = await axios.put(`http://localhost:10000/updateStars`, { post_id: id });
-      setStarCount(response.data.stars);
-      setPost(prevPost => ({ ...prevPost, stars: response.data.stars }));
+      setStarCount(response.data.totalStars); 
+      setPost(prevPost => ({ ...prevPost, stars: response.data.totalStars })); 
     } catch (error) {
       console.error(error);
     }
   };
 
   const Publication = ({ pub, handleLike, handleNewComment }) => {
+    const [likeCount, setLikeCount] = useState(pub.likes || 0);
+    const [showCommentField, setShowCommentField] = useState(false);
+    const [newComment, setNewComment] = useState(''); // Mover el estado aquí
+  
+    const handleLikeClick = async (publicationId) => {
+      const updatedPub = await handleLike(publicationId);
+      if (updatedPub) {
+        setLikeCount(updatedPub.likes);
+      }
+    };
+  
+    const toggleCommentField = () => {
+      setShowCommentField(!showCommentField);
+    };
+  
     return (
       <div className='publication'>
         <div className='header'>
-          <h2>{pub.title}</h2>
-          <p>{moment(pub.time).fromNow()}</p>
+          <h2>{pub?.title}</h2>
+          <p>{pub?.time ? moment(pub.time).fromNow() : ''}</p>
         </div>
-        <p>{pub.description}</p>
-        {pub.image_url && <img src={pub.image_url} alt={pub.title} style={{maxWidth: '100%', height: 'auto'}} />}
-        <button onClick={() => handleLike(pub.id)}>Like</button>
-        <input value={newComment} onChange={e => setNewComment(e.target.value)} />
-        <button onClick={handleNewComment}>New Comment</button>
+        <p>{pub?.description}</p>
+        {pub?.image_url && <img src={pub.image_url} alt={pub.title} style={{maxWidth: '100%', height: 'auto'}} />}
+        {handleLikeClick && <button onClick={() => handleLikeClick(pub?.id)}>Like {likeCount}</button>}
+        <button onClick={toggleCommentField}>Comentar</button>
+        {comments[pub?.id]?.map(comment => (
+          <div key={comment.id}>
+            <p>{comment.username}: {comment.text}</p>
+            <p>{comment.time ? moment(comment.time).fromNow() : ''}</p>
+          </div>
+        ))}
+        {showCommentField && (
+        <>
+          <input value={newComment} onChange={e => setNewComment(e.target.value)} />
+          {handleNewComment && <button onClick={() => { handleNewComment(pub.id, newComment); setNewComment(''); }}>New Comment</button>}
+        </>
+      )}
       </div>
     );
   };
@@ -151,36 +191,40 @@ const PostPage = () => {
     <div className="master-container">
       <div className="post-bar">
         <h1>{post?.room_name}</h1>
-        <button onClick={handleStar}>Star</button>
+        {handleStar && <button onClick={handleStar}>Star</button>}
         <span>{starCount}</span> 
-        <button onClick={() => setShowNewPublicationForm(!showNewPublicationForm)}>New Publication</button>
+        {isUserPost && setShowNewPublicationForm && <button onClick={() => setShowNewPublicationForm(!showNewPublicationForm)}>New Publication</button>}
       </div>
       {showNewPublicationForm && (
         <div className="post-section">
-          <input
-            value={newPublication.title}
-            onChange={e => setNewPublication({ ...newPublication, title: e.target.value })}
-            placeholder="Title"
-          />
-          <textarea
-            value={newPublication.description}
-            onChange={e => setNewPublication({ ...newPublication, description: e.target.value })}
-            placeholder="Description"
-          />
-          <input
+          {setNewPublication && (
+            <>
+              <input
+                value={newPublication?.title}
+                onChange={e => setNewPublication({ ...newPublication, title: e.target.value })}
+                placeholder="Title"
+              />
+              <textarea
+                value={newPublication?.description}
+                onChange={e => setNewPublication({ ...newPublication, description: e.target.value })}
+                placeholder="Description"
+              />
+            </>
+          )}
+          {handleFileUpload && <input
             type="file"
             onChange={handleFileUpload}
             placeholder="Image URL (optional)"
-          />
-          <button onClick={handleNewPublication}>Publish</button>
+          />}
+          {handleNewPublication && <button onClick={handleNewPublication}>Publish</button>}
         </div>
       )}
       <div className="post-container">
-      {publications.map(pub => (
-        <Publication key={pub.id} pub={pub} handleLike={handleLike} handleNewComment={handleNewComment} />
-      ))}
+        {publications?.map(pub => (
+          <Publication key={pub.id} pub={pub} handleLike={handleLike} handleNewComment={handleNewComment} />
+        ))}
       </div>
-      {chatRoomId.current && <button className="enter-chat" onClick={() => window.location.href = `/main/chat/${chatRoomId.current}`}>Go to Chat Room</button>}
+      {chatRoomId?.current && <button className="enter-chat" onClick={() => window.location.href = `/main/chat/${chatRoomId.current}`}>Go to Chat Room</button>}
     </div>
   );
 };

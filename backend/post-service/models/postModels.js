@@ -42,8 +42,22 @@ class PostModel {
     return await PostDatabase.getAllPosts();
   }
 
-  static async findById(id) {
-    return await PostDatabase.getPostById(id);
+  static async findById(post_id, userId) {
+    try {
+      const query = 'SELECT * FROM posts WHERE id = $1';
+      const parameters = [post_id];
+      const result = await PostDatabase.query(query, parameters);
+      
+      let post = result.length > 0 ? result[0] : null;
+      
+      if (post) {
+        post.isUserPost = post.user_id === userId;
+      }
+      
+      return post;
+    } catch (error) {
+      throw new Error('An error occurred while executing the query');
+    }
   }
 
   static async findByIdAndUpdate(id, data, options) {
@@ -59,7 +73,10 @@ class PostModel {
     let query = 'SELECT * FROM stars WHERE user_id = $1 AND post_id = $2';
     let parameters = [user_id, post_id];
     let result = await PostDatabase.query(query, parameters);
-    if (result.rows && result.rows.length > 0) {
+    
+    console.log(`Result of check query: ${JSON.stringify(result)}`);
+    
+    if (result && result.length > 0) {
       // Si el usuario ya ha dado una estrella al post, lanza un error
       throw new Error(`User ${user_id} has already starred post ${post_id}`);
     }
@@ -69,22 +86,24 @@ class PostModel {
     parameters = [user_id, post_id];
     await PostDatabase.query(query, parameters);
   
+    // Actualiza el número de estrellas en la tabla posts
+    query = 'UPDATE posts SET stars = (SELECT COUNT(*) FROM stars WHERE post_id = $1) WHERE id = $1';
+    parameters = [post_id];
+    await PostDatabase.query(query, parameters);
+  
     // Obtiene el número total de estrellas para el post
     query = 'SELECT COUNT(*) AS total_stars FROM stars WHERE post_id = $1';
     parameters = [post_id];
     result = await PostDatabase.query(query, parameters);
     
-    // Verifica que result.rows no esté vacío
-    if (!result.rows || result.rows.length === 0) {
+    console.log(`Result of count query: ${JSON.stringify(result)}`);
+    
+    // Verifica que result no esté vacío
+    if (!result || result.length === 0) {
       return { totalStars: 0 }; // Devuelve un objeto con totalStars: 0 si no se encuentran estrellas
     }
     
-    const totalStars = result.rows[0].total_stars;
-  
-    // Actualiza el número de estrellas en la tabla posts
-    query = 'UPDATE posts SET stars = $1 WHERE id = $2';
-    parameters = [totalStars, post_id];
-    await PostDatabase.query(query, parameters);
+    const totalStars = result[0].total_stars;
   
     // Devuelve el número total de estrellas
     return { totalStars };
@@ -120,20 +139,50 @@ class PostModel {
     return await PostDatabase.query(query, parameters);
   }
 
-  static async updateLikes(id, likes) {
-    const query = 'UPDATE publications SET likes = $1 WHERE id = $2 RETURNING *';
-    const parameters = [likes, id];
-    return await PostDatabase.query(query, parameters);
+  static async updateLikes(publication_id, user_id) {
+    let query = 'SELECT * FROM likes WHERE user_id = $1 AND publication_id = $2';
+    let parameters = [user_id, publication_id];
+    let result = await PostDatabase.query(query, parameters);
+    
+    if (result && result.length > 0) {
+      throw new Error(`User ${user_id} has already liked post ${publication_id}`);
+    }
+  
+    query = 'INSERT INTO likes (user_id, publication_id, time) VALUES ($1, $2, NOW())';
+    parameters = [user_id, publication_id];
+    await PostDatabase.query(query, parameters);
+  
+    query = 'UPDATE publications SET likes = (SELECT COUNT(*) FROM likes WHERE publication_id = $1) WHERE id = $1';
+    parameters = [publication_id];
+    await PostDatabase.query(query, parameters);
+  
+    query = 'SELECT COUNT(*) AS total_likes FROM likes WHERE publication_id = $1';
+    parameters = [publication_id];
+    result = await PostDatabase.query(query, parameters);
+    
+    if (!result || result.length === 0) {
+      return { totalLikes: 0 };
+    }
+    
+    const totalLikes = result[0].total_likes;
+  
+    return { totalLikes };
   }
 
   static async addComment(data) {
+    const { user_id, publication_id, text } = data;
+    const time = new Date();
     const query = 'INSERT INTO comments (publication_id, user_id, text, time) VALUES ($1, $2, $3, $4) RETURNING *';
-    const parameters = [data.publication_id, data.user_id, data.text, data.time];
+    const parameters = [publication_id, user_id, text, time];
     return await PostDatabase.query(query, parameters);
   }
 
   static async getComments() {
-    const query = 'SELECT * FROM comments';
+    const query = `
+      SELECT comments.id, comments.publication_id, users.username, comments.text, comments.time 
+      FROM comments 
+      INNER JOIN users ON comments.user_id = users.user_id
+    `;
     return await PostDatabase.query(query);
   }
 
