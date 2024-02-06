@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import PostModel from '../models/postModels.js';
 
-// Define the post input schema
 const postInputSchema = z.object({
   roomName: z.string(),
   description: z.string(), 
@@ -13,23 +12,18 @@ const postInputSchema = z.object({
 export const PostController = {
   createPost: async (req, res, next) => {
     try {
-      console.log(req.body); // Add this line to log the request body
+      console.log(req.body); 
   
-      // Check if the user is authenticated
       if (!req.user) {
         return res.status(401).json({ message: 'Not authenticated' });
       }
   
-      // Extract the user_id from req.user
       const userId = req.user.id;
   
-      // Parse the request body
       const postInput = postInputSchema.parse({ user_id: userId, ...req.body });
   
-      // Log the values that will be passed to createPost
       console.log(`roomName: ${postInput.roomName}, ${postInput.description}, lat: ${postInput.lat}, lng: ${postInput.lng}, userId: ${userId}`);
   
-      // Include the user_id in the call to createPost
       const newPost = await PostModel.createPost(userId, postInput.roomName, postInput.description, postInput.lat, postInput.lng);
   
       res.status(201).json({ message: 'Post created', newPost });
@@ -62,7 +56,12 @@ export const PostController = {
   
       const post = await PostModel.findById(post_id, userId);
   
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+  
       res.status(200).send(post);
+      console.log(post);
     } catch (error) {
       console.error(error);
       next(new Error('An error occurred while getting the post'));

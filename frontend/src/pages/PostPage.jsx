@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './PostPage.css';
 import moment from 'moment';
+import StreamPage from './StreamPage';
 
 axios.defaults.withCredentials = true;
 
@@ -25,6 +26,11 @@ const PostPage = () => {
   const [showNewPublicationForm, setShowNewPublicationForm] = useState(false);
   const [starCount, setStarCount] = useState(0);
   const [isUserPost, setIsUserPost] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const startStreaming = () => {
+    setIsStreaming(true);
+  };
+  console.log(isStreaming)
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -37,8 +43,8 @@ const PostPage = () => {
         }
         setPost(response.data); 
         console.log(response.data);
-        setIsUserPost(response.data.isUserPost); 
-        console.log(response.data.isUserPost);
+        setIsUserPost(response.data.isuserpost || false); 
+        console.log(response.data.isuserpost);
         setStarCount(response.data.stars || 0);
         console.log(response.data.stars);
 
@@ -148,7 +154,7 @@ const PostPage = () => {
   const Publication = ({ pub, handleLike, handleNewComment }) => {
     const [likeCount, setLikeCount] = useState(pub.likes || 0);
     const [showCommentField, setShowCommentField] = useState(false);
-    const [newComment, setNewComment] = useState(''); // Mover el estado aquí
+    const [newComment, setNewComment] = useState(''); 
   
     const handleLikeClick = async (publicationId) => {
       const updatedPub = await handleLike(publicationId);
@@ -190,10 +196,13 @@ const PostPage = () => {
   return (
     <div className="master-container">
       <div className="post-bar">
-        <h1>{post?.room_name}</h1>
+        <div className="user-info">
+          <h1>{post?.room_name}</h1>
+          <h2>{post?.username}</h2> 
+        </div>
         {handleStar && <button onClick={handleStar}>Star</button>}
         <span>{starCount}</span> 
-        {isUserPost && setShowNewPublicationForm && <button onClick={() => setShowNewPublicationForm(!showNewPublicationForm)}>New Publication</button>}
+        {isUserPost && <button onClick={() => setShowNewPublicationForm(!showNewPublicationForm)}>New Publication</button>}
       </div>
       {showNewPublicationForm && (
         <div className="post-section">
@@ -225,6 +234,11 @@ const PostPage = () => {
         ))}
       </div>
       {chatRoomId?.current && <button className="enter-chat" onClick={() => window.location.href = `/main/chat/${chatRoomId.current}`}>Go to Chat Room</button>}
+      {isStreaming ? (
+        <StreamPage />
+      ) : (
+        <button onClick={startStreaming}>Start Streaming</button>
+      )}
     </div>
   );
 };

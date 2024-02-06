@@ -26,7 +26,6 @@ body, html {
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  overflow: hidden;
   margin: 2px;
   margin-bottom: 5px;
   border-radius: 10px;
@@ -35,6 +34,11 @@ body, html {
   border-bottom: 5px solid #7b8a3f; 
 }
 
+.post-bar .user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 0.1; 
+}
 .post-container {
   flex-grow: 1;
   overflow: auto;

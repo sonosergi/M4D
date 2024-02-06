@@ -44,15 +44,17 @@ class PostModel {
 
   static async findById(post_id, userId) {
     try {
-      const query = 'SELECT * FROM posts WHERE id = $1';
-      const parameters = [post_id];
+      const query = `
+        SELECT posts.id, users.username, posts.room_name, posts.description, posts.stars, posts.lat, posts.lng, 
+        CASE WHEN posts.user_id = $2 THEN true ELSE false END AS isUserPost
+        FROM posts 
+        INNER JOIN users ON posts.user_id = users.user_id
+        WHERE posts.id = $1
+      `;
+      const parameters = [post_id, userId];
       const result = await PostDatabase.query(query, parameters);
       
       let post = result.length > 0 ? result[0] : null;
-      
-      if (post) {
-        post.isUserPost = post.user_id === userId;
-      }
       
       return post;
     } catch (error) {
@@ -69,7 +71,6 @@ class PostModel {
   }
 
   static async updateStars(post_id, user_id) {
-    // Comprueba si el usuario ya ha dado una estrella al post
     let query = 'SELECT * FROM stars WHERE user_id = $1 AND post_id = $2';
     let parameters = [user_id, post_id];
     let result = await PostDatabase.query(query, parameters);
@@ -77,35 +78,29 @@ class PostModel {
     console.log(`Result of check query: ${JSON.stringify(result)}`);
     
     if (result && result.length > 0) {
-      // Si el usuario ya ha dado una estrella al post, lanza un error
       throw new Error(`User ${user_id} has already starred post ${post_id}`);
     }
   
-    // Si el usuario no ha dado una estrella al post, añade una entrada a la tabla stars
     query = 'INSERT INTO stars (user_id, post_id, time) VALUES ($1, $2, NOW())';
     parameters = [user_id, post_id];
     await PostDatabase.query(query, parameters);
   
-    // Actualiza el número de estrellas en la tabla posts
     query = 'UPDATE posts SET stars = (SELECT COUNT(*) FROM stars WHERE post_id = $1) WHERE id = $1';
     parameters = [post_id];
     await PostDatabase.query(query, parameters);
   
-    // Obtiene el número total de estrellas para el post
     query = 'SELECT COUNT(*) AS total_stars FROM stars WHERE post_id = $1';
     parameters = [post_id];
     result = await PostDatabase.query(query, parameters);
     
     console.log(`Result of count query: ${JSON.stringify(result)}`);
     
-    // Verifica que result no esté vacío
     if (!result || result.length === 0) {
-      return { totalStars: 0 }; // Devuelve un objeto con totalStars: 0 si no se encuentran estrellas
+      return { totalStars: 0 }; 
     }
     
     const totalStars = result[0].total_stars;
   
-    // Devuelve el número total de estrellas
     return { totalStars };
   }
 

@@ -32,8 +32,6 @@ function ChatRoom() {
   const [isSending, setIsSending] = useState(false);
   const [isFileInputVisible, setIsFileInputVisible] = useState(false);
 
-
-
   useEffect(() => {
     const socket = io.connect(`http://localhost:7000`, {
       withCredentials: true
