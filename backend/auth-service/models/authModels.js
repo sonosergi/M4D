@@ -19,10 +19,18 @@ export class AuthModel {
       throw new Error('Either phoneNumber or username must be provided');
     }
     const [user] = await AuthDatabase.getUser(username, phoneNumber);
+    console.log('user:', user);
     if (!user) {
       throw new Error('User not found');
     }
     return user;
+  }
+
+  static async comparePassword(password, hashedPassword) {
+    if (!password || !hashedPassword) {
+      throw new Error('password and hashedPassword must be provided');
+    }
+    return await argon2.verify(hashedPassword, password);
   }
 
   static async hashPassword(password) {
@@ -42,13 +50,6 @@ export class AuthModel {
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
     const uniqueId = uuidv4();
     await AuthDatabase.createUser(uniqueId, phoneNumber, username, hashedPassword, verificationCode);
-  }
-
-  static async comparePassword(password, hashedPassword) {
-    if (!password || !hashedPassword) {
-      throw new Error('password and hashedPassword must be provided');
-    }
-    return await argon2.verify(hashedPassword, password);
   }
 
   // static async createUser(phoneNumber, username, password) {

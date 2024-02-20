@@ -11,37 +11,40 @@ const StreamPage = () => {
   const [streamId, setStreamId] = useState(null);
   const mediaStreamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
+  const livePlayerRef = useRef(null); // Add this line
+  const liveVideoRef = useRef(null); // Add this line
+
 
   useEffect(() => {
-    socketRef.current = io.connect('http://172.17.0.2:3500', { withCredentials: true, reconnection: true, reconnectionAttempts: 5 });
-  
+    socketRef.current = io.connect('http://localhost:3500', {
+      withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+    });
+
+    socketRef.current.on('connect_error', (error) => {
+      console.log('Connection error:', error);
+    });
+
     socketRef.current.on('connect', () => {
       console.log('Connected to server');
-      if (!isStreaming) {
-        startStream().catch(error => {
-          console.error('Error starting stream:', error);
-          stopMediaStream();
-        });
+      // Emit 'start-stream' event to the server
+      socketRef.current.emit('start-stream');
+    });
+
+    socketRef.current.on('webrtc-signal', (data) => {
+      console.log('Received webrtc signal:', data);
+      // Save the received streamId
+      if (data.streamId) {
+        setStreamId(data.streamId);
       }
     });
-  
-    socketRef.current.on('stream', ({ streamId }) => {
-      setStreamId(streamId);
-      setIsStreaming(true);
-      if (socketRef.current) {
-        socketRef.current.emit('start-stream');
-      }
-    });
-  
+
     socketRef.current.on('disconnect', () => {
       console.log('Disconnected from server');
       stopMediaStream();
     });
-  
-    socketRef.current.on('connect_error', (error) => {
-      console.log('Connection error:', error);
-    });
-  
+
     return () => {
       if (socketRef.current) {
         socketRef.current.disconnect();
@@ -51,45 +54,50 @@ const StreamPage = () => {
   }, []);
 
   useEffect(() => {
-    if (isStreaming && playerRef.current && streamId) {
+    if (isStreaming && livePlayerRef.current && streamId) {
+      const livePlayer = videojs(liveVideoRef.current, {
+        controls: true,
+        autoplay: false,
+        preload: 'auto',
+        fluid: true,
+      });
+      livePlayerRef.current = livePlayer;
+
       setTimeout(() => {
-        fetch(`http://172.17.0.2:3500/live/${streamId}.mpd`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Video not available');
-            }
-            return response.blob();
-          })
-          .then(blob => {
-            playerRef.current.src({
-              src: URL.createObjectURL(blob),
-              type: 'application/dash+xml',
-            });
-            playerRef.current.on('loadeddata', function() {
-              playerRef.current.play().catch(error => console.error('Error playing video:', error));
-            });
-          })
-          .catch(error => console.error('Error:', error));
-      }, 5000); 
+        if (socketRef.current) {
+          socketRef.current.emit('request-video', streamId); // Use the streamId from state
+        }
+      }, 500);
+      setIsStreaming(false);
     }
-  
+
     return () => {
-      if (playerRef.current) {
-        playerRef.current.dispose();
-        playerRef.current = null;
+      if (livePlayerRef.current) {
+        livePlayerRef.current.dispose();
+        livePlayerRef.current = null;
       }
     };
   }, [isStreaming, streamId]);
 
   useEffect(() => {
-    if (videoRef.current) {
-      playerRef.current = videojs(videoRef.current, { controls: true, autoplay: false, preload: 'auto' });
-    }
-  
+    socketRef.current.on('video-chunk', ({ streamId, chunk }) => {
+      console.log('Received video chunk:', streamId, chunk);
+      if (livePlayerRef.current) {
+        livePlayerRef.current.srcObject = new MediaSource();
+        livePlayerRef.current.srcObject.addEventListener('sourceopen', function () {
+          const sourceBuffer = this.addSourceBuffer('video/webm; codecs="vp8, vorbis"');
+          sourceBuffer.addEventListener('updateend', function () {
+            livePlayerRef.current.play();
+          });
+          sourceBuffer.appendBuffer(new Uint8Array(chunk));
+        });
+      }
+    });
+
     return () => {
-      if (playerRef.current) {
-        playerRef.current.dispose();
-        playerRef.current = null;
+      if (livePlayerRef.current) {
+        livePlayerRef.current.dispose();
+        livePlayerRef.current = null;
       }
     };
   }, []);
@@ -103,12 +111,17 @@ const StreamPage = () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     mediaStreamRef.current = stream;
   
+    // Check if isStreaming is true before accessing videoRef.current
+    if (isStreaming) {
+      videoRef.current.srcObject = stream;
+    }
+
     if (!window.MediaRecorder) {
       console.error('MediaRecorder is not supported in this browser');
       return;
     }
-  
-    if (socketRef.current) {  
+
+    if (socketRef.current) {
       let options = { mimeType: 'video/webm;codecs=vp9,opus' };
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
         options = { mimeType: 'video/webm;codecs=vp8,opus' };
@@ -129,32 +142,26 @@ const StreamPage = () => {
           }
         }
       }
-  
+
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
       mediaRecorder.ondataavailable = (event) => {
-        console.log('MediaRecorder data available:', event.data.size)
+        console.log('MediaRecorder data available:', event.data.size);
         if (event.data && event.data.size > 0) {
-          const reader = new FileReader();
-          reader.onload = function(evt) {
-            console.log('FileReader data:', evt.target.result);
-            socketRef.current.emit('stream-data', evt.target.result);
-          };
-          reader.onerror = function(error) {
-            console.error('Error reading data:', error);
-          };
-          reader.readAsArrayBuffer(event.data);
+          // Emit the ArrayBuffer directly
+          socketRef.current.emit('stream-data', { streamId, chunk: event.data }); // Use the streamId from state
         }
       };
-  
+
       mediaRecorder.onstop = () => {
         console.log('MediaRecorder stopped');
       };
-  
+
       mediaRecorder.onerror = (event) => {
         console.error('Error recording media:', event.error);
       };
-  
-      mediaRecorder.start(1000);
+
+      mediaRecorder.start(50);
+
       console.log('MediaRecorder started');
       mediaRecorderRef.current = mediaRecorder;
       setIsStreaming(true);
@@ -163,7 +170,7 @@ const StreamPage = () => {
 
   const stopMediaStream = () => {
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
     }
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
@@ -177,8 +184,9 @@ const StreamPage = () => {
         {isStreaming ? 'Streaming...' : 'Start Stream'}
       </button>
       {isStreaming && (
-        <div data-vjs-player style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-          <video ref={videoRef} className="video-js vjs-fill" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}></video>
+        <div>
+          <video ref={videoRef} className="video-js vjs-default-skin" autoPlay />
+          <video ref={liveVideoRef} className="video-js vjs-default-skin" />
         </div>
       )}
     </div>

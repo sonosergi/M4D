@@ -5,6 +5,7 @@ import Middleware from "./middlewares/headers.js";
 import RateLimiters from './middlewares/rateLimiters.js';
 
 
+
 const { helmetMiddleware, winstonMiddleware, winstonErrorMiddleware } = Middleware;
 const app = express();
 app.use(express.json());
@@ -13,7 +14,7 @@ import cors from 'cors';
 app.use(cors({
   origin: 'http://localhost:5173', 
   methods: ['GET', 'POST'],
-  credentials: true 
+  credentials: "true" ,
 }));
 
 //app.use(corsMiddleware);

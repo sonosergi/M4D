@@ -42,6 +42,7 @@ export const PostController = {
   listPosts: async (req, res) => {
     const posts = await PostModel.find();
     res.status(200).send(posts);
+    console.log(posts);
   },
 
   getPost: async (req, res, next) => {

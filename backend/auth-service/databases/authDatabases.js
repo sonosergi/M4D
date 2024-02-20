@@ -8,10 +8,10 @@ export class AuthDatabase {
     await DatabaseConfig.configDB();
   }
 
-  static async createUser(uniqueId, phoneNumber, username, hashedPassword, verificationCode) {
+  static async createUser(uniqueId, phoneNumber, username, hashedPassword, email, verificationCode) {
     // Insert user into authdb
-    const authQuery = 'INSERT INTO users(user_id, phone_number, username, password, verification_code) VALUES($1, $2, $3, $4, $5)';
-    await authdb.query(authQuery, [uniqueId, phoneNumber, username, hashedPassword, verificationCode]);
+    const authQuery = 'INSERT INTO users(user_id, phone_number, username, password, verification_code) VALUES($1, $2, $3, $4, $5, $6)';
+    await authdb.query(authQuery, [uniqueId, phoneNumber, username, hashedPassword, email, verificationCode]);
 
     // Insert user into chatdb
     const chatQuery = 'INSERT INTO users(user_id, username) VALUES($1, $2)';

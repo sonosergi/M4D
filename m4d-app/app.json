@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "m4d-app",
+    "slug": "m4d-app",
+    "version": "1.0.0",
+    "scheme": "m4d-app",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.m4dapp",
+      "runtimeVersion": "1.0.0"
+    },
+    "ios": {
+      "bundleIdentifier": "com.m4dapp",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b72e08f7-67aa-4af6-a42f-c6ebd31f331b"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b72e08f7-67aa-4af6-a42f-c6ebd31f331b"
+    }
+  }
+}

@@ -1,32 +1,29 @@
-import { check, validationResult } from 'express-validator';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import cookie from 'cookie';
 
-export const validateRegister = [
-  check('phoneNumber')
-    .notEmpty()
-    .withMessage('Phone number is required')
-    .isMobilePhone()
-    .withMessage('Invalid phone number'),
-  check('username')
-    .notEmpty()
-    .withMessage('Username is required')
-    .isLength({ min: 5 })
-    .withMessage('Username must be at least 5 characters long')
-    .isAlphanumeric()
-    .withMessage('Username must be alphanumeric'),
-  check('password')
-    .notEmpty()
-    .withMessage('Password is required')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long')
-    .matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/)
-    .withMessage('Password must contain at least one letter, one number, and be at least 8 characters long'),
-];
+dotenv.config();
 
-export const validate = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+function validateUser(req, res, next) {
+  try {
+    const cookies = cookie.parse(req.headers.cookie || '');
+    const token = cookies.session; 
+    console.log('tokenServerSession: ', token);
+
+    if (!token) {
+      return res.status(403).json({ message: 'Not authenticated' });
+    }
+
+    jwt.verify(token, process.env.SECRET_KEY, (err) => {
+      if (err) {
+        return res.status(403).json({ message: 'Invalid token' });
+      }
+      next();
+    });
+  } catch (err) {
+    console.error('Error validating user: ', err);
+    return res.status(500).json({ message: 'An error occurred' });
   }
-  next();
-};
+}
 
+export default validateUser;

@@ -1,4 +1,4 @@
-import { AuthController } from '../../controllers/authControllers.js';
+import { AuthController } from '../../controllers/authControllersBKP.js';
 // import RateLimiters from '../../middlewares/rateLimiters.js';
 // import { validateRegister, validate } from '../../middlewares/validateUser.js';
 import { Router } from 'express';
