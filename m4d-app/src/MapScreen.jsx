@@ -8,7 +8,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
 import "core-js/stable/atob";
 import SearchMap from './SearchMap.jsx'; // Import the SearchMap component
-
+import CreateEvent from './CreateEvent.jsx';
+import CreatePlace from './CreatePlace.jsx';
 
 const decodeToken = async (tokenKey) => {
   try {
@@ -25,8 +26,33 @@ const Map = () => {
   const [sessionToken, setSessionToken] = useState(null);
   const [open, setOpen] = useState(false);
   const [userType, setUserType] = useState(null);
-  const [searchValue, setSearchValue] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [creatingEvent, setCreatingEvent] = useState(false);
+  const [creatingPlace, setCreatingPlace] = useState(false); 
+  const [markerCoords, setMarkerCoords] = useState(null);
+  const [fabIcon, setFabIcon] = useState('plus');
+  const [allowMarkerCreation, setAllowMarkerCreation] = useState(false);
+
+  const resetActionButton = () => {
+    setCreatingEvent(false);
+    setCreatingPlace(false);
+    setShowSearchBar(false);
+    setFabIcon('plus');
+    setAllowMarkerCreation(false);
+    setMarkerCoords(null); // Reset marker coordinates
+  };
+
+  const handleMapPress = (e) => {
+    if (allowMarkerCreation) {
+      setMarkerCoords(e.nativeEvent.coordinate);
+      if (creatingEvent) {
+        setCreatingEvent(true);
+      }
+      if (creatingPlace) {
+        setCreatingPlace(true);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -45,15 +71,59 @@ const Map = () => {
   if (!userType) {
     return null; 
   }
-  console.log('userType:', userType);
+
+  const handleEventCreated = (coords) => {
+    console.log('Evento creado');
+    setCreatingEvent(false);
+    setMarkerCoords(coords);
+  };
+
+  const handlePlaceCreated = (coords) => {
+    console.log('Sitio creado');
+    setCreatingPlace(false);
+    setMarkerCoords(coords);
+  };
+
+  const handleActionButtonPress = (action) => {
+    switch (action.icon) {
+      case 'calendar':
+        if (creatingEvent) {
+          resetActionButton();
+        } else {
+          setCreatingEvent(true);
+          setCreatingPlace(false);
+          setFabIcon('calendar');
+          setAllowMarkerCreation(true);
+        }
+        break;
+      case 'map-marker':
+        if (creatingPlace) {
+          resetActionButton();
+        } else {
+          setCreatingPlace(true);
+          setCreatingEvent(false);
+          setFabIcon('map-marker');
+          setAllowMarkerCreation(true);
+        }
+        break;
+      case 'magnify':
+        if (showSearchBar) {
+          resetActionButton();
+        } else {
+          setShowSearchBar(true);
+          setFabIcon('magnify');
+        }
+        break;
+    }
+  };
 
   const actions = [
-    { icon: 'calendar', onPress: () => console.log('Crear evento'), label: 'Crear evento' },
-    { icon: 'magnify', onPress: () => setShowSearchBar(!showSearchBar), label: 'Buscar' },
+    { icon: 'calendar', onPress: () => handleActionButtonPress({ icon: 'calendar' }), label: 'Crear evento' },
+    { icon: 'magnify', onPress: () => handleActionButtonPress({ icon: 'magnify' }), label: 'Buscar' },
   ];
 
   if (userType === 'professional') {
-    actions.splice(1, 0, { icon: 'map-marker', onPress: () => console.log('Crear punto'), label: 'Crear punto' });
+    actions.splice(1, 0, { icon: 'map-marker', onPress: () => handleActionButtonPress({ icon: 'map-marker' }), label: 'Crear sitio' });
   }
 
   return (
@@ -69,25 +139,24 @@ const Map = () => {
           longitudeDelta: 0.0421,
         }}
         mapType="standard"
+        onPress={handleMapPress}
       >
+        {markerCoords && <Marker coordinate={markerCoords} />}
       </MapView>
       {showSearchBar && <SearchMap />}
+      {creatingEvent && <CreateEvent onEventCreated={handleEventCreated} markerCoords={markerCoords} />}
+      {creatingPlace && <CreatePlace onPlaceCreated={handlePlaceCreated} markerCoords={markerCoords} />}
       <FAB.Group
         open={open}
-        icon={open ? 'map' : 'plus'}
+        icon={fabIcon} // Modified icon prop
         rippleColor="blue"
         backdropColor='transparent'
         actions={actions}
         onStateChange={({ open }) => setOpen(open)}
-        onPress={() => {
-          if (open) {
-            // do something if the button is open
-          }
-        }}
+        onPress={resetActionButton}
       />
     </>
   );
 };
-
 
 export default Map;

@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import crypto from 'crypto';
-import { AuthModel } from '../models/authModelsApp.js';
 
 dotenv.config();
 
@@ -95,8 +94,12 @@ export class AuthController {
         expiresIn: '1h', // Change this to your desired session duration
       });
       console.log('userTypeToken: ', userTypeToken);
+
+      const userIdToken = jwt.sign({ user_id: userId }, process.env.SECRET_KEY, {
+        expiresIn: '1h', // Change this to your desired session duration
+      });
   
-      return { sessionToken, userTypeToken };
+      return { sessionToken, userTypeToken, userIdToken };
     } catch (err) {
       console.error('Error processing session request: ', err);
       throw new Error('An error occurred');

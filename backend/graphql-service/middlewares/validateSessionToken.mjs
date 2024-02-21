@@ -7,6 +7,7 @@ async function validateSessionToken(req, res, next) {
     if (!req.headers.authorization) {
       return res.status(401).json({ message: 'No authorization header provided' });
     }
+    console.log('req.headers', req.headers)
 
     const token = req.headers.authorization.split(' ')[1];
     console.log('Token:', token);
@@ -30,11 +31,12 @@ async function validateSessionToken(req, res, next) {
 
     const decoded = jwt.verify(decryptedToken, process.env.SECRET_KEY);
 
-    const { user_id } = decoded;
-    req.user_id = user_id; // Agrega esta línea
-    console.log('user_iddddd:', req.user_id);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
     next();
-  
+
   } catch (err) {
     console.error('Error verifying token: ', err);
     return res.status(401).json({ message: 'Token verification failed' });

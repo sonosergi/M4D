@@ -1,12 +1,28 @@
 import { PostDatabase } from "../databases/postDatabases.js"; 
 import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
 
 const postInputSchema = z.object({
+  id: z.string().uuid(),
   user_id: z.string().uuid(),
   roomName: z.string().min(1),
   description: z.string(), 
   lat: z.number(), 
-  lng: z.number(), 
+  lng: z.number(),
+  category: z.string(),
+  type_post: z.string(), 
+  duration: z.number().int()
+});
+
+const placeInputSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  roomName: z.string().min(1),
+  description: z.string(), 
+  lat: z.number(), 
+  lng: z.number(),
+  category: z.string(),
+  type_post: z.string(), 
 });
 
 class PostModel {
@@ -18,21 +34,41 @@ class PostModel {
     return await PostDatabase.createPost(this.data);
   }
 
-  static async createPost(user_id, roomName, description, lat, lng) {
-    const postInput = postInputSchema.parse({ user_id, roomName, description, lat, lng });
+  static async createEvent(user_id, roomName, description, lat, lng, category, type_post, duration) {
+    const postInput = postInputSchema.parse({ id: uuidv4(), user_id, roomName, description, lat, lng, category, type_post, duration});
   
     const existingPost = await PostDatabase.query(
-      'SELECT * FROM posts WHERE room_name = $1',
+      'SELECT * FROM event WHERE room_name = $1',
       [postInput.roomName]
     );
   
     if (existingPost.length > 0) {
-      throw new Error('Post already exists');
+      throw new Error('Event already exists');
     }
   
     const newPost = await PostDatabase.query(
-      'INSERT INTO posts (user_id, room_name, description, lat, lng) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [postInput.user_id, postInput.roomName, postInput.description, postInput.lat, postInput.lng]
+      'INSERT INTO event (id, user_id, room_name, description, lat, lng, category, type_post, duration) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [postInput.id, postInput.user_id, postInput.roomName, postInput.description, postInput.lat, postInput.lng, postInput.category, postInput.type_post, postInput.duration]
+    );
+  
+    return newPost[0];
+  }
+
+  static async createPlace(user_id, roomName, description, lat, lng, category, type_post) {
+    const placeInput = placeInputSchema.parse({ id: uuidv4(), user_id, roomName, description, lat, lng, category, type_post});
+  
+    const existingPost = await PostDatabase.query(
+      'SELECT * FROM place WHERE room_name = $1',
+      [placeInput.roomName]
+    );
+  
+    if (existingPost.length > 0) {
+      throw new Error('Place already exists');
+    }
+  
+    const newPost = await PostDatabase.query(
+      'INSERT INTO place (id, user_id, room_name, description, lat, lng, category, type_post) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [placeInput.id, placeInput.user_id, placeInput.roomName, placeInput.description, placeInput.lat, placeInput.lng, placeInput.category, placeInput.type_post]
     );
   
     return newPost[0];

@@ -16,13 +16,21 @@ app.post('/requestNoAuth', AuthController.requestNoAuth);
 
 const httpServer = http.createServer(app);
 
-const server = new ApolloServer({
+const serverNoAuth = new ApolloServer({
   typeDefs,
   resolvers,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
-await server.start();
+const serverAuth = new ApolloServer({
+  typeDefs,
+  resolvers,
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+});
+
+await serverNoAuth.start();
+await serverAuth.start();
+
 
 app.use(
   cors(),
@@ -30,10 +38,12 @@ app.use(
 );
 
 // Ruta para operaciones que no necesitan user_id
-app.use('/graphql/noAuth', validateUserApp, expressMiddleware(server));
+app.use('/graphql/noAuth', validateUserApp, expressMiddleware(serverNoAuth));
 
 // Ruta para operaciones que necesitan user_id
-app.use('/graphql/withAuth', validateSessionToken, expressMiddleware(server));
+app.use('/graphql/withAuth', validateSessionToken, expressMiddleware(serverAuth, {
+  context: async ({ req }) => ({ userIdToken: req.headers['x-user-id'] }),
+}));
 
 const PORT = process.env.PORT || 7575;
 await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));

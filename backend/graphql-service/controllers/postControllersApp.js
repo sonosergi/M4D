@@ -1,40 +1,64 @@
 import { z } from 'zod';
-import PostModel from '../models/postModels.js';
+import PostModel from '../models/postModelsApp.js';
 
 const postInputSchema = z.object({
   roomName: z.string(),
   description: z.string(), 
   lat: z.number(),
   lng: z.number(),
-  user_id: z.string()
+  user_id: z.string(),
+  category: z.string(),
+  type_post: z.string(),
+  duration: z.number()
+});
+
+const placeInputSchema = z.object({
+  roomName: z.string(),
+  description: z.string(), 
+  lat: z.number(),
+  lng: z.number(),
+  user_id: z.string(),
+  category: z.string(),
+  type_post: z.string(),
 });
 
 export const PostController = {
-  createPost: async (req, res, next) => {
+  createEvent: async (eventData) => {
     try {
-      console.log(req.body); 
-  
-      if (!req.user) {
-        return res.status(401).json({ message: 'Not authenticated' });
-      }
-  
-      const userId = req.user.id;
-  
-      const postInput = postInputSchema.parse({ user_id: userId, ...req.body });
-  
-      console.log(`roomName: ${postInput.roomName}, ${postInput.description}, lat: ${postInput.lat}, lng: ${postInput.lng}, userId: ${userId}`);
-  
-      const newPost = await PostModel.createPost(userId, postInput.roomName, postInput.description, postInput.lat, postInput.lng);
-  
-      res.status(201).json({ message: 'Post created', newPost });
+      const postInput = postInputSchema.parse(eventData);
+
+      console.log(`roomName: ${postInput.roomName}, description: ${postInput.description}, lat: ${postInput.lat}, lng: ${postInput.lng}, userId: ${postInput.user_id}, category: ${postInput.category}, type_post: ${postInput.type_post}, duration: ${postInput.duration}`);
+
+      const newPost = await PostModel.createEvent(postInput.user_id, postInput.roomName, postInput.description, postInput.lat, postInput.lng, postInput.category, postInput.type_post, postInput.duration);
+      return newPost;
     } catch (error) {
       console.error(error);
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: error.message });
+        throw new Error(error.message);
       } else if (error.message === 'Post already exists') {
-        res.status(400).json({ message: 'Post already exists' });
+        throw new Error('Post already exists');
       } else {
-        next(new Error('An error occurred while creating the post'));
+        throw new Error('An error occurred while creating the post');
+      }
+    }
+  },
+
+  createPlace: async (eventData) => {
+    try {
+      const placeInput = placeInputSchema.parse(eventData);
+
+      console.log(`roomName: ${placeInput.roomName}, description: ${placeInput.description}, lat: ${placeInput.lat}, lng: ${placeInput.lng}, userId: ${placeInput.user_id}, category: ${placeInput.category}, type_post: ${placeInput.type_post}`);
+
+      const newPost = await PostModel.createPlace(placeInput.user_id, placeInput.roomName, placeInput.description, placeInput.lat, placeInput.lng, placeInput.category, placeInput.type_post);
+      return newPost;
+    } catch (error) {
+      console.error(error);
+      if (error instanceof z.ZodError) {
+        throw new Error(error.message);
+      } else if (error.message === 'Post already exists') {
+        throw new Error('Post already exists');
+      } else {
+        throw new Error('An error occurred while creating the post');
       }
     }
   },

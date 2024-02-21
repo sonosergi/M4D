@@ -12,6 +12,7 @@ const LOGIN_MUTATION = gql`
     login(username: $username, password: $password) {
       sessionToken
       userTypeToken
+      userIdToken
     }
   }
 `;
@@ -64,7 +65,7 @@ function LogIn({ onLogin }) {
       });
   
       if (data && data.login && data.login.sessionToken && data.login.userTypeToken) {
-        handleLoginSuccess(data.login.sessionToken, data.login.userTypeToken);
+        handleLoginSuccess(data.login.sessionToken, data.login.userTypeToken, data.login.userIdToken);
       }
     } catch (error) {
       console.error('Error during login:', error.message);
@@ -72,12 +73,15 @@ function LogIn({ onLogin }) {
     }
   }, [getNoAuthCookie, client]);
   
-  const handleLoginSuccess = useCallback(async (sessionToken, userTypeToken) => {
+  const handleLoginSuccess = useCallback(async (sessionToken, userTypeToken, userIdToken) => {
     try {
       // Store session token securely
       await storeToken('@secureSessionToken', sessionToken);
       await storeToken('@secureUserTypeToken', userTypeToken);
-      console.log('Tokeeeeensssstored:', sessionToken, userTypeToken);
+      await storeToken('@secureUserIdToken', userIdToken);
+      console.log('secureSessionToken:', sessionToken);
+      console.log('secureUserTypeToken:', userTypeToken);
+      console.log('secureUserIdToken:', userIdToken);
   
       if (typeof onLogin === 'function') {
         onLogin();
